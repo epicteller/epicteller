@@ -1,22 +1,24 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
+import json
 import time
-from typing import List, Optional
+from typing import Optional, Iterable, Dict
 
 import base62
-from sqlalchemy import select, and_
+from sqlalchemy import select
 
+from epicteller.core.model.dice import Dice
 from epicteller.core.tables import table
 from epicteller.core.util import ObjectDict
-from epicteller.core.util.const import DiceType
+from epicteller.core.util.enum import DiceType
 from epicteller.core.util.seq import get_id
+from epicteller.core.util.typing import DiceValue_T
 
 
-def _format_dice(result) -> Optional[ObjectDict]:
+def _format_dice(result) -> Optional[Dice]:
     if not result:
         return None
-    dice = ObjectDict(
+    dice = Dice(
         id=result.id,
         url_token=result.url_token,
         character_id=result.character_id,
@@ -24,14 +26,14 @@ def _format_dice(result) -> Optional[ObjectDict]:
         type=DiceType(result.type),
         expression=result.expression,
         detail=result.detail,
-        reason=result.reason,
+        reason=result.reason or None,
         result=result.result,
         created=result.created,
     )
     return dice
 
 
-class Dice:
+class DiceDAO:
     t = table.dice
 
     select_clause = select([
@@ -48,27 +50,27 @@ class Dice:
     ])
     
     @classmethod
-    async def get_dice_by_id(cls, dice_id: int) -> Optional[ObjectDict]:
-        query = cls.select_clause.where(cls.t.c.id == dice_id)
-        result = await table.execute(query)
-        return _format_dice(await result.fetchone())
+    async def batch_get_dice_by_id(cls, dice_ids: Iterable[int]) -> Dict[int, Dice]:
+        query = cls.select_clause.where(cls.t.c.id.in_(dice_ids))
+        res = await table.execute(query)
+        rows = res.fetchall()
+        return {row.id: _format_dice(row) for row in rows}
 
     @classmethod
-    async def get_dice_by_url_token(cls, url_token: str) -> Optional[ObjectDict]:
-        query = cls.select_clause.where(cls.t.c.url_token == url_token)
-        result = await table.execute(query)
-        return _format_dice(await result.fetchone())
+    async def batch_get_dice_by_url_token(cls, url_tokens: Iterable[str]) -> Dict[str, Dice]:
+        query = cls.select_clause.where(cls.t.c.url_token.in_(url_tokens))
+        res = await table.execute(query)
+        rows = res.fetchall()
+        return {row.url_token: _format_dice(row) for row in rows}
 
     @classmethod
     async def update_dice(cls, dice_id: int, **kwargs) -> None:
-        if 'updated' not in kwargs:
-            kwargs['updated'] = int(time.time())
         query = cls.t.update().values(kwargs).where(cls.t.c.id == dice_id)
         await table.execute(query)
 
     @classmethod
     async def create_dice(cls, character_id: int, episode_id: int, dice_type: DiceType, expression: str,
-                          detail: str, reason: str, result: dict) -> ObjectDict:
+                          detail: str, result: DiceValue_T, reason: Optional[str]= '') -> Dice:
         created = int(time.time())
         url_token = base62.encode(get_id())
         values = ObjectDict(
@@ -78,7 +80,7 @@ class Dice:
             type=int(dice_type),
             expression=expression,
             detail=detail,
-            reason=reason,
+            reason=reason if reason else '',
             result=result,
             created=created,
         )

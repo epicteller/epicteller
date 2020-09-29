@@ -1,34 +1,36 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import time
-from typing import List, Optional
+from typing import List, Optional, Iterable, Dict
 
 import base62
 from sqlalchemy import select, and_
 
+from epicteller.core.model.room import Room
 from epicteller.core.tables import table
 from epicteller.core.util import ObjectDict
+from epicteller.core.util.enum import ExternalType
 from epicteller.core.util.seq import get_id
 
 
-def _format_room(result) -> Optional[ObjectDict]:
+def _format_room(result) -> Optional[Room]:
     if not result:
         return None
-    room = ObjectDict(
+    room = Room(
         id=result.id,
         url_token=result.url_token,
         name=result.name,
         description=result.description,
         is_removed=bool(result.is_removed),
-        external_channel_id=result.external_channel_id,
-        default_campaign_id=result.default_campaign_id,
+        current_campaign_id=result.current_campaign_id or None,
         avatar=result.avatar,
         created=int(result.created),
+        updated=int(result.updated),
     )
     return room
 
 
-class Room:
+class RoomDAO:
     t = table.room
     select_clause = select([
         t.c.id,
@@ -37,32 +39,28 @@ class Room:
         t.c.description,
         t.c.owner_id,
         t.c.is_removed,
-        t.c.external_channel_id,
-        t.c.default_campaign_id,
+        t.c.current_campaign_id,
         t.c.avatar,
         t.c.created,
+        t.c.updated,
     ])
 
     @classmethod
-    async def get_room_by_id(cls, room_id: int) -> Optional[ObjectDict]:
-        query = cls.select_clause.where(cls.t.c.id == room_id)
+    async def batch_get_room_by_id(cls, room_ids: Iterable[int]) -> Dict[int, Room]:
+        query = cls.select_clause.where(cls.t.c.id.in_(room_ids))
         result = await table.execute(query)
-        return _format_room(await result.fetchone())
+        rows = await result.fetchall()
+        return {row.id: _format_room(row) for row in rows}
 
     @classmethod
-    async def get_room_by_url_token(cls, url_token: str) -> Optional[ObjectDict]:
-        query = cls.select_clause.where(cls.t.c.url_token == url_token)
+    async def batch_get_room_by_url_token(cls, url_tokens: Iterable[str]) -> Dict[str, Room]:
+        query = cls.select_clause.where(cls.t.c.url_token.in_(url_tokens))
         result = await table.execute(query)
-        return _format_room(await result.fetchone())
+        rows = await result.fetchall()
+        return {row.url_token: _format_room(row) for row in rows}
 
     @classmethod
-    async def get_room_by_channel_id(cls, channel_id: str) -> Optional[ObjectDict]:
-        query = cls.select_clause.where(cls.t.c.external_channel_id == channel_id)
-        result = await table.execute(query)
-        return _format_room(await result.fetchone())
-
-    @classmethod
-    async def get_rooms_by_owner(cls, member_id: int) -> List[ObjectDict]:
+    async def get_rooms_by_owner(cls, member_id: int) -> List[Room]:
         query = cls.select_clause.where(cls.t.c.owner_id == member_id)
         results = await table.execute(query)
         rooms = [_format_room(room) for room in await results.fetchall()]
@@ -76,8 +74,7 @@ class Room:
         await table.execute(query)
 
     @classmethod
-    async def create_room(cls, name: str, description: str, owner_id: int,
-                          channel_id: str, avatar: str='') -> ObjectDict:
+    async def create_room(cls, name: str, description: str, owner_id: int, avatar: str='') -> Room:
         created = int(time.time())
         url_token = base62.encode(get_id())
         values = ObjectDict(
@@ -86,8 +83,7 @@ class Room:
             description=description,
             owner_id=owner_id,
             is_removed=0,
-            external_channel_id=channel_id,
-            default_campaign_id=0,
+            current_campaign_id=0,
             avatar=avatar,
             created=created,
             updated=created,
@@ -99,7 +95,7 @@ class Room:
         return room
 
 
-class RoomMember:
+class RoomMemberDAO:
     t = table.room_member
 
     @classmethod
@@ -139,7 +135,7 @@ class RoomMember:
         await table.execute(query)
 
 
-class RoomRunningEpisode:
+class RoomRunningEpisodeDAO:
     t = table.room_running_episode
 
     @classmethod
@@ -159,4 +155,41 @@ class RoomRunningEpisode:
     @classmethod
     async def remove_running_episode(cls, room_id: int) -> None:
         query = cls.t.delete().where(cls.t.c.room_id == room_id)
+        await table.execute(query)
+
+
+class RoomExternalDAO:
+    t = table.room_external_id
+
+    @classmethod
+    async def get_room_id_by_external(cls, external_type: ExternalType, external_id: str) -> Optional[int]:
+        query = select([cls.t.c.room_id]).where(and_(cls.t.c.type == int(external_type),
+                                                     cls.t.c.external_id == external_id))
+        result = await table.execute(query)
+        room_id = await result.scalar()
+        return room_id
+
+    @classmethod
+    async def get_external_ids_by_room(cls, room_id: int) -> Dict[ExternalType, str]:
+        query = select([
+            cls.t.c.type,
+            cls.t.c.external_id,
+        ]).where(cls.t.c.room_id == room_id)
+        result = await table.execute(query)
+        rows = await result.fetchall()
+        externals = {ExternalType(row.type): row.external_id for row in rows}
+        return externals
+
+    @classmethod
+    async def bind_room_external_id(cls, room_id: int, external_type: ExternalType, external_id: str) -> None:
+        query = cls.t.insert().values(
+            room_id=room_id,
+            type=int(external_type),
+            external_id=external_id,
+        )
+        await table.execute(query)
+
+    @classmethod
+    async def unbind_room_external_id(cls, room_id: int, external_type: ExternalType) -> None:
+        query = cls.t.delete().where(and_(cls.t.c.room_id == room_id, cls.t.c.type == int(external_type)))
         await table.execute(query)

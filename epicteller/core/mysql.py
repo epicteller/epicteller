@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 
 import aiomysql
 import asyncio
+import contextvars
 import json
 import logging
 import time
@@ -12,7 +13,7 @@ import time
 from aiomysql.sa import create_engine as async_create_engine
 from sqlalchemy import create_engine, exc, MetaData
 
-_g = threading.local()
+_g = contextvars.ContextVar('connection')
 logger = logging.getLogger('db')
 
 
@@ -45,9 +46,8 @@ class DBProxy(object):
                                                 connect_timeout=self.connect_timeout)
 
     async def execute(self, statement, *multiparams, **params):
-        global _g
         engine = self.master
-        conn = getattr(_g, 'connection', None)
+        conn = _g.get(None)
         if not conn:
             conn = await engine.acquire()
         start_time = time.time()
@@ -62,23 +62,23 @@ class DBProxy(object):
                                                total_time * 1000))
             return result
         except aiomysql.OperationalError:
-            logger.error("OperationalError in %s/%s" % (engine.url.host,
-                                                        engine.url.database),
+            logger.error("OperationalError in %s/%s", engine.url.host,
+                                                      engine.url.database,
                          exc_info=1)
             raise
         except aiomysql.Error:
             raise
         finally:
-            if not hasattr(_g, 'connection'):
+            if _g.get(None) is None:
                 engine.release(conn)
 
     @asynccontextmanager
     async def begin(self):
-        conn = await self.master.connect()
+        conn = await self.master.acquire()
         trans = await conn.begin()
+        token = None
         try:
-            global _g
-            _g.connection = conn
+            token = _g.set(conn)
             yield
             await trans.commit()
         except Exception:
@@ -86,7 +86,7 @@ class DBProxy(object):
             raise
         finally:
             self.master.release(conn)
-            del _g.connection
+            _g.reset(token)
 
 
 class Tables(object):

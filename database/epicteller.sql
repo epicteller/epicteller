@@ -4,20 +4,31 @@ USE test_epicteller;
 
 CREATE TABLE IF NOT EXISTS `member`
 (
-    `id`             BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `url_token`      VARCHAR(200)        NOT NULL,
-    `name`           VARCHAR(50)         NOT NULL,
-    `email`          VARCHAR(200)        NOT NULL,
-    `passhash`       BINARY(140)         NOT NULL,
-    `headline`       VARCHAR(140)        NOT NULL DEFAULT '',
-    `external_qq_id` VARCHAR(200)        NOT NULL DEFAULT '',
-    `avatar`         VARCHAR(200)        NOT NULL DEFAULT '',
-    `created`        BIGINT(20) UNSIGNED NOT NULL DEFAULT 0,
-    `updated`        BIGINT(20) UNSIGNED NOT NULL DEFAULT 0,
+    `id`        BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+    `url_token` VARCHAR(200)        NOT NULL,
+    `name`      VARCHAR(50)         NOT NULL,
+    `email`     VARCHAR(200)        NOT NULL,
+    `passhash`  VARCHAR(100)        NOT NULL,
+    `headline`  VARCHAR(140)        NOT NULL DEFAULT '',
+    `avatar`    VARCHAR(200)        NOT NULL DEFAULT '',
+    `created`   BIGINT(20) UNSIGNED NOT NULL DEFAULT 0,
+    `updated`   BIGINT(20) UNSIGNED NOT NULL DEFAULT 0,
     PRIMARY KEY (`id`),
     UNIQUE KEY `unq_url_token` (`url_token`),
-    UNIQUE KEY `unq_email` (`email`),
-    UNIQUE KEY `unq_external_qq_id` (`external_qq_id`)
+    UNIQUE KEY `unq_email` (`email`)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `member_external_id`
+(
+    `id`          BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+    `member_id`   BIGINT(20) UNSIGNED NOT NULL,
+    `type`        TINYINT(4)          NOT NULL,
+    `external_id` VARCHAR(200)        NOT NULL,
+    PRIMARY KEY (`id`),
+    KEY `idx_member` (`member_id`),
+    UNIQUE KEY `unq_member_type` (`member_id`, `type`),
+    UNIQUE KEY `unq_type_external` (`type`, `external_id`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4;
 
@@ -29,14 +40,12 @@ CREATE TABLE IF NOT EXISTS `room`
     `description`         TEXT                NOT NULL,
     `owner_id`            BIGINT(20) UNSIGNED NOT NULL,
     `is_removed`          TINYINT(1) UNSIGNED NOT NULL DEFAULT 0,
-    `external_channel_id` VARCHAR(200)        NOT NULL DEFAULT '',
-    `default_campaign_id` BIGINT(20) UNSIGNED NOT NULL DEFAULT 0,
+    `current_campaign_id` BIGINT(20) UNSIGNED NOT NULL DEFAULT 0,
     `avatar`              VARCHAR(200)        NOT NULL DEFAULT '',
     `created`             BIGINT(20) UNSIGNED NOT NULL DEFAULT 0,
     `updated`             BIGINT(20) UNSIGNED NOT NULL DEFAULT 0,
     PRIMARY KEY (`id`),
     UNIQUE KEY `unq_url_token` (`url_token`),
-    UNIQUE KEY `unq_external_channel_id` (`external_channel_id`),
     KEY `idx_owner_id` (`owner_id`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4;
@@ -63,18 +72,32 @@ CREATE TABLE IF NOT EXISTS `room_member`
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4;
 
-CREATE TABLE IF NOT EXISTS `campaign`
+CREATE TABLE IF NOT EXISTS `room_external_id`
 (
     `id`          BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `url_token`   VARCHAR(200)        NOT NULL,
-    `room_id`     BIGINT(20)          NOT NULL,
-    `name`        VARCHAR(200)        NOT NULL,
-    `description` TEXT                NOT NULL,
-    `owner_id`    BIGINT(20) UNSIGNED NOT NULL,
-    `state`       TINYINT(2)          NOT NULL DEFAULT 0,
-    `is_removed`  TINYINT(1)          NOT NULL DEFAULT 0,
-    `created`     BIGINT(20) UNSIGNED NOT NULL DEFAULT 0,
-    `updated`     BIGINT(20) UNSIGNED NOT NULL DEFAULT 0,
+    `room_id`     BIGINT(20) UNSIGNED NOT NULL,
+    `type`        TINYINT(4)          NOT NULL,
+    `external_id` VARCHAR(200)        NOT NULL,
+    PRIMARY KEY (`id`),
+    KEY `idx_room` (`room_id`),
+    UNIQUE KEY `unq_room_type` (`room_id`, `type`),
+    UNIQUE KEY `unq_type_external` (`type`, `external_id`)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `campaign`
+(
+    `id`              BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+    `url_token`       VARCHAR(200)        NOT NULL,
+    `room_id`         BIGINT(20)          NOT NULL,
+    `name`            VARCHAR(200)        NOT NULL,
+    `description`     TEXT                NOT NULL,
+    `owner_id`        BIGINT(20) UNSIGNED NOT NULL,
+    `state`           TINYINT(2)          NOT NULL DEFAULT 0,
+    `is_removed`      TINYINT(1)          NOT NULL DEFAULT 0,
+    `last_episode_id` BIGINT(20) UNSIGNED NOT NULL DEFAULT 0,
+    `created`         BIGINT(20) UNSIGNED NOT NULL DEFAULT 0,
+    `updated`         BIGINT(20) UNSIGNED NOT NULL DEFAULT 0,
     PRIMARY KEY (`id`),
     UNIQUE KEY `unq_url_token` (`url_token`),
     UNIQUE KEY `unq_room_name` (`room_id`, `name`),
@@ -101,6 +124,19 @@ CREATE TABLE IF NOT EXISTS `character`
     UNIQUE KEY `unq_campaign_name` (`campaign_id`, `name`),
     KEY `idx_name_campaign` (`name`, `campaign_id`),
     KEY `idx_member_id` (`member_id`)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `character_external_id`
+(
+    `id`           BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+    `character_id` BIGINT(20) UNSIGNED NOT NULL,
+    `type`         TINYINT(4)          NOT NULL,
+    `external_id`  VARCHAR(200)        NOT NULL,
+    PRIMARY KEY (`id`),
+    KEY `idx_character` (`character_id`),
+    UNIQUE KEY `unq_character_type` (`character_id`, `type`),
+    KEY `idx_type_external` (`type`, `external_id`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4;
 
@@ -149,14 +185,13 @@ CREATE TABLE IF NOT EXISTS `message`
     `character_id` BIGINT(20) UNSIGNED NOT NULL,
     `type`         TINYINT(2)          NOT NULL DEFAULT 0,
     `is_removed`   TINYINT(1) UNSIGNED NOT NULL DEFAULT 0,
-    `content`      TEXT                NOT NULL,
-    `dice_id`      BIGINT(20) UNSIGNED NOT NULL DEFAULT 0,
+    `is_gm`        TINYINT(1) UNSIGNED NOT NULL DEFAULT 0,
+    `content`      JSON                NOT NULL,
     `created`      BIGINT(20) UNSIGNED NOT NULL DEFAULT 0,
     `updated`      BIGINT(20) UNSIGNED NOT NULL DEFAULT 0,
     PRIMARY KEY (`id`),
     UNIQUE KEY `unq_url_token` (`url_token`),
     KEY `idx_episode_id` (`episode_id`, `is_removed`, `id`),
-    KEY `idx_character_id` (`character_id`),
-    KEY `idx_dice_id` (`dice_id`)
+    KEY `idx_character_id` (`character_id`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4;

@@ -2,21 +2,22 @@
 # -*- coding: utf-8 -*-
 
 import time
-from typing import List, Optional
+from typing import Optional, Iterable, Dict, List
 
 import base62
 from sqlalchemy import select, and_
 
+from epicteller.core.model.episode import Episode
 from epicteller.core.tables import table
 from epicteller.core.util import ObjectDict
-from epicteller.core.util.const import EpisodeState
+from epicteller.core.util.enum import EpisodeState
 from epicteller.core.util.seq import get_id
 
 
-def _format_episode(result) -> Optional[ObjectDict]:
+def _format_episode(result) -> Optional[Episode]:
     if not result:
         return None
-    episode = ObjectDict(
+    episode = Episode(
         id=result.id,
         url_token=result.url_token,
         room_id=result.room_id,
@@ -32,7 +33,7 @@ def _format_episode(result) -> Optional[ObjectDict]:
     return episode
 
 
-class Episode:
+class EpisodeDAO:
     t = table.episode
 
     select_clause = select([
@@ -50,16 +51,30 @@ class Episode:
     ])
     
     @classmethod
-    async def get_episode_by_id(cls, episode_id: int) -> Optional[ObjectDict]:
-        query = cls.select_clause.where(cls.t.c.id == episode_id)
+    async def batch_get_episode_by_id(cls, episode_ids: Iterable[int]) -> Dict[int, Episode]:
+        query = cls.select_clause.where(cls.t.c.id.in_(episode_ids))
         result = await table.execute(query)
-        return _format_episode(await result.fetchone())
+        rows = await result.fetchall()
+        return {row.id: _format_episode(row) for row in rows}
 
     @classmethod
-    async def get_episode_by_url_token(cls, url_token: str) -> Optional[ObjectDict]:
-        query = cls.select_clause.where(cls.t.c.url_token == url_token)
+    async def batch_get_episode_by_url_token(cls, url_tokens: Iterable[str]) -> Dict[str, Episode]:
+        query = cls.select_clause.where(cls.t.c.url_token.in_(url_tokens))
         result = await table.execute(query)
-        return _format_episode(await result.fetchone())
+        rows = await result.fetchall()
+        return {row.url_token: _format_episode(row) for row in rows}
+
+    @classmethod
+    async def get_episode_ids_by_room_states(cls, room_id: int, states: Iterable[EpisodeState]) -> List[int]:
+        query = select([cls.t.c.id]).where(
+            and_(cls.t.c.room_id == room_id,
+                 cls.t.c.state.in_([int(state) for state in states])),
+        )
+        result = await table.execute(query)
+        rows = await result.fetchall()
+        episode_ids = [row.id for row in rows]
+        episode_ids.sort()
+        return episode_ids
 
     @classmethod
     async def update_episode(cls, episode_id: int, **kwargs) -> None:
@@ -69,7 +84,7 @@ class Episode:
         await table.execute(query)
 
     @classmethod
-    async def create_episode(cls, room_id: int, campaign_id: int, title: str):
+    async def create_episode(cls, room_id: int, campaign_id: int, title: str, state: EpisodeState) -> Episode:
         created = int(time.time())
         url_token = base62.encode(get_id())
         values = ObjectDict(
@@ -77,7 +92,7 @@ class Episode:
             room_id=room_id,
             campaign_id=campaign_id,
             title=title,
-            state=int(EpisodeState.RUNNING),
+            state=int(state),
             is_removed=0,
             started_at=created,
             ended_at=None,

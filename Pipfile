@@ -21,12 +21,21 @@ supervisor = ">=4.0.3"
 # Environment variable parsing
 environs = ">=4.2.0"
 lark-parser = "*"
-epicteller-datum = "*"
+epicteller-datum = ">=0.3.1"
 ipython = ">=7.7.0"
 aiomysql = "*"
-quart = ">=0.9.1"
+quart = "*"
 aioredis = "*"
 pybase62 = "*"
+aiokafka = "*"
+bcrypt = "*"
+sanic = "==19.9.0"
+sanic-auth = "*"
+sanic-session = "*"
+nonebot = ">=1.5.0"
+httpx = "*"
+cos-python-sdk-v5 = "*"
+pillow = "*"
 
 [dev-packages]
 # Testing
