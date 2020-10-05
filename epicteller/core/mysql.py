@@ -12,6 +12,7 @@ import time
 
 from aiomysql.sa import create_engine as async_create_engine
 from sqlalchemy import create_engine, exc, MetaData
+from sqlalchemy.engine.url import make_url
 
 _g = contextvars.ContextVar('connection')
 logger = logging.getLogger('db')
@@ -91,17 +92,19 @@ class DBProxy(object):
 
 class Tables(object):
 
-    def __init__(self, user, password, host, port, database,
+    def __init__(self, url: str,
                  longquery_time=1.0, minsize=1, maxsize=10,
                  pool_recycle=1800, connect_timeout=10):
-        self.user = user
-        self.password = password
-        self.host = host
-        self.port = port
-        self.database = database
+        self.url = url
+        schema = make_url(url)
+        self.user = schema.username
+        self.password = schema.password
+        self.host = schema.host
+        self.port = schema.port
+        self.database = schema.database
         self.__db = DBProxy(
-            user=user, password=password,
-            host=host, port=port, database=database,
+            user=self.user, password=self.password,
+            host=self.host, port=self.port, database=self.database,
             longquery_time=longquery_time,
             minsize=minsize,
             maxsize=maxsize,
@@ -111,7 +114,7 @@ class Tables(object):
         self._initialize_meta()
 
     def _initialize_meta(self):
-        engine = create_engine(f'mysql+pymysql://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}')
+        engine = create_engine(self.url)
         self.meta = MetaData()
         self.meta.reflect(bind=engine)
 

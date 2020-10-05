@@ -20,11 +20,7 @@ class Config:
     SENTRY_API_KEY = os.environ.get('SENTRY_API_KEY')
 
     # MySQL
-    MYSQL_USERNAME = os.environ.get('EPICTELLER_MYSQL_USERNAME')
-    MYSQL_PASSWORD = os.environ.get('EPICTELLER_MYSQL_PASSWORD')
-    MYSQL_HOST = os.environ.get('EPICTELLER_MYSQL_HOST')
-    MYSQL_PORT = os.environ.get('EPICTELLER_MYSQL_PORT')
-    MYSQL_DATABASE = os.environ.get('EPICTELLER_MYSQL_DATABASE')
+    MYSQL_URL = os.environ.get('EPICTELLER_MYSQL_URL')
 
     # Redis
     REDIS_URL = os.getenv('EPICTELLER_REDIS_URL')

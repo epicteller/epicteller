@@ -27,7 +27,7 @@ def get_bot() -> nonebot.NoneBot:
         return _bot
     nonebot.init()
     nonebot.load_plugins(path.join(path.dirname(__file__), 'plugin'),
-                         'plugin')
+                         'epicteller.bot.plugin')
     _bot = nonebot.get_bot()
     _bot.server_app.config.from_object(Config)
     return _bot

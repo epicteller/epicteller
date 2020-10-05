@@ -2,40 +2,19 @@
 ARG INSTALL_PYTHON_VERSION=${INSTALL_PYTHON_VERSION:-3.7}
 FROM python:${INSTALL_PYTHON_VERSION}-slim-stretch AS base
 
-RUN apt-get update
-RUN apt-get install -y \
-    curl
-
-ARG INSTALL_NODE_VERSION=${INSTALL_NODE_VERSION:-12}
-RUN curl -sL https://deb.nodesource.com/setup_${INSTALL_NODE_VERSION}.x | bash -
-RUN apt-get install -y \
-    nodejs \
-    && apt-get -y autoclean
-
 WORKDIR /app
-COPY ["Pipfile", "shell_scripts/auto_pipenv.sh", "./"]
+COPY ["./", "./"]
 RUN pip install pipenv
+ENV PYTHONPATH "${PYTHONPATH}:."
 
-COPY [ "assets", "package.json", "webpack.config.js", "./" ]
-RUN npm install
-
-# ================================= DEVELOPMENT ================================
-FROM base AS development
-RUN pipenv install --dev
-EXPOSE 2992
-EXPOSE 5000
-CMD [ "pipenv", "run", "npm", "start" ]
+# =============================== PRODUCTION-BASE ==============================
+FROM base AS production-base
+RUN pipenv install
 
 # ================================= PRODUCTION =================================
-FROM base AS production
-RUN pipenv install
+FROM production-base AS production
 COPY supervisord.conf /etc/supervisor/supervisord.conf
 COPY supervisord_programs /etc/supervisor/conf.d
-EXPOSE 5000
+EXPOSE 10090
 ENTRYPOINT ["/bin/bash", "shell_scripts/supervisord_entrypoint.sh"]
 CMD ["-c", "/etc/supervisor/supervisord.conf"]
-
-# =================================== MANAGE ===================================
-FROM base AS manage
-COPY --from=development /root/.local/share/virtualenvs/ /root/.local/share/virtualenvs/
-ENTRYPOINT [ "pipenv", "run", "flask" ]

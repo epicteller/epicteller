@@ -1,0 +1,34 @@
+version: '3.6'
+
+x-build-args: &build_args
+  INSTALL_PYTHON_VERSION: 3.7
+
+x-default-volumes: &default_volumes
+  volumes:
+    - ./:/app
+
+services:
+  epicteller-dev:
+    build:
+      context: .
+      target: development
+      args:
+        <<: *build_args
+    image: "epicteller-development"
+    ports:
+      - "10090:10090"
+      - "2992:2992"
+    <<: *default_volumes
+
+  epicteller-prod:
+    build:
+      context: .
+      target: production
+      args:
+        <<: *build_args
+    image: "epicteller-production"
+    ports:
+      - "5000:5000"
+    environment:
+      LOG_LEVEL: info
+    <<: *default_volumes
