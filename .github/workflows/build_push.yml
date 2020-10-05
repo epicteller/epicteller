@@ -5,7 +5,7 @@ on:
     branches: master
 
 jobs:
-  'Docker build and push':
+  'publish_docker':
     runs-on: ubuntu-latest
     steps:
       -
