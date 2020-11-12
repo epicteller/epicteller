@@ -55,9 +55,11 @@ async def upload_image(image_data: bytes) -> str:
     return image_token
 
 
-def get_presigned_url(filename: str, headers: dict) -> str:
+def get_presigned_url(filename: str, headers: dict, bucket: str=None) -> str:
+    if not bucket:
+        bucket = Config.COS_IMAGE_BUCKET
     return cos_client.get_presigned_url(
-        Bucket=Config.COS_IMAGE_BUCKET,
+        Bucket=bucket,
         Key=filename,
         Method='PUT',
         Headers=headers,
