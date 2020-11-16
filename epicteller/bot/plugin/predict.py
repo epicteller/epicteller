@@ -26,7 +26,7 @@ async def predict(session: CommandSession):
         'Content-Length': str(len(packed_feed)),
         'Content-MD5': md5,
     }
-    target_url = imghosting.get_presigned_url(token, headers, bucket=bucket)
+    target_url = imghosting.get_presigned_url(f'memory/{token}', headers, bucket=bucket)
     async with httpx.AsyncClient() as http_client:
         r = await http_client.put(target_url, data=packed_feed, headers=headers)
         r.raise_for_status()
