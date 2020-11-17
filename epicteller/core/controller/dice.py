@@ -1,22 +1,34 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import random
+import struct
 from typing import Optional, Iterable, Dict, Union
 
 from datum import Parser
 from datum.base import Result
 
+from epicteller.core.config import Config
 from epicteller.core.dao.dice import DiceDAO
 from epicteller.core.model.dice import Dice
 from epicteller.core.util.enum import DiceType
 from epicteller.core.util.typing import DiceValue_T
 
 parser = Parser()
+rand = random.Random()
 
 
 async def roll_dice(expr: str) -> Result:
     component = parser.parse(expr)
+    component.set_dice_generator(lambda face: rand.randint(1, face))
     result = component.to_result()
+    await _update_memory_dump()
     return result
+
+
+async def _update_memory_dump():
+    data = [rand.getrandbits(32) for _ in range(624)]
+    packed_data = struct.pack('624I', *data)
+    await DiceDAO.update_memory_dump(Config.RUNTIME_ID, packed_data)
 
 
 async def get_dice(dice_id: int=None, *, url_token: str=None) -> Optional[Dice]:

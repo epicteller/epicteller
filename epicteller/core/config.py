@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import os
+import random
 
 
 class Config:
@@ -36,3 +37,5 @@ class Config:
 
     REQUEST_TIMEOUT = 600
     RESPONSE_TIMEOUT = 600
+
+    RUNTIME_ID = f'{random.randint(0, 9999):04d}'
