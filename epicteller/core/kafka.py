@@ -19,19 +19,25 @@ class Bus:
                  *args, **kwargs):
         if job_paths is None:
             job_paths = []
+        self.bootstrap_servers = bootstrap_servers
+        self.loop = loop
+        self.init_args = args
+        self.init_kwargs = kwargs
         self.job_paths = job_paths
         self._subscribers = defaultdict(set)
-        self.consumer = AIOKafkaConsumer(loop=loop, bootstrap_servers=bootstrap_servers, *args, **kwargs)
+        self.consumer = None
 
     def attach(self, topic: str, subscriber: Callable) -> None:
         self._subscribers[topic].add(subscriber)
-        self.consumer.subscribe(self.topics)
+        if self.consumer:
+            self.consumer.subscribe(self.topics)
 
     def detach(self, topic: str, subscriber: Callable) -> None:
         self._subscribers[topic].discard(subscriber)
         if not self._subscribers[topic]:
             del self._subscribers[topic]
-        self.consumer.subscribe(self.topics)
+        if self.consumer:
+            self.consumer.subscribe(self.topics)
 
     @property
     def topics(self) -> List[str]:
@@ -63,6 +69,11 @@ class Bus:
         for path in self.job_paths:
             load_modules(path, recursive=True)
         try:
+            self.consumer = AIOKafkaConsumer(loop=self.loop,
+                                             bootstrap_servers=self.bootstrap_servers,
+                                             *self.init_args,
+                                             **self.init_kwargs)
+            self.consumer.subscribe(self.topics)
             await self.consumer.start()
         except Exception:
             asyncio.get_event_loop().stop()
