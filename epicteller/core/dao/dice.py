@@ -7,6 +7,7 @@ from typing import Optional, Iterable, Dict
 import base62
 from sqlalchemy import select
 
+from epicteller.core import redis
 from epicteller.core.model.dice import Dice
 from epicteller.core.tables import table
 from epicteller.core.util import ObjectDict
@@ -35,6 +36,7 @@ def _format_dice(result) -> Optional[Dice]:
 
 class DiceDAO:
     t = table.dice
+    r = redis.redis
 
     select_clause = select([
         t.c.id,
@@ -89,3 +91,7 @@ class DiceDAO:
         values.id = result.lastrowid
         dice = _format_dice(values)
         return dice
+
+    @classmethod
+    async def update_memory_dump(cls, runtime_id: str, data: bytes):
+        await cls.r.set(f'memory_dump:{runtime_id}', data, expire=3600)
