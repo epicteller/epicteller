@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import pickle
 import random
 import struct
 from typing import Optional, Iterable, Dict, Union
@@ -26,9 +27,8 @@ async def roll_dice(expr: str) -> Result:
 
 
 async def update_memory_dump():
-    data = [rand.getrandbits(32) for _ in range(624)]
-    packed_data = struct.pack('624I', *data)
-    await DiceDAO.update_memory_dump(Config.RUNTIME_ID, packed_data)
+    data = pickle.dumps(rand)
+    await DiceDAO.update_memory_dump(Config.RUNTIME_ID, data)
 
 
 async def get_dice(dice_id: int=None, *, url_token: str=None) -> Optional[Dice]:
