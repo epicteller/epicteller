@@ -94,4 +94,4 @@ class DiceDAO:
 
     @classmethod
     async def update_memory_dump(cls, runtime_id: str, data: bytes):
-        await cls.r.set(f'memory_dump:{runtime_id}', data, expire=3600)
+        await cls.r.set(f'memory_dump:{runtime_id}', data, expire=86400)
