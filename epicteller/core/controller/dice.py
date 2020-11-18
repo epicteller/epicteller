@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 import pickle
 import random
-import struct
 from typing import Optional, Iterable, Dict, Union
 
 from datum import Parser
