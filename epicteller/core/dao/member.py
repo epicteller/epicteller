@@ -6,6 +6,7 @@ from typing import Optional, Dict, Iterable
 import base62
 from sqlalchemy import select, and_
 
+from epicteller.core import redis
 from epicteller.core.model.member import Member
 from epicteller.core.tables import table
 from epicteller.core.util import ObjectDict
@@ -31,6 +32,7 @@ def _format_member(result) -> Optional[Member]:
 
 class MemberDAO:
     t = table.member
+    r = redis.redis
     select_clause = select([
         t.c.id,
         t.c.url_token,
@@ -97,6 +99,34 @@ class MemberDAO:
         values.id = result.lastrowid
         member = _format_member(values)
         return member
+
+    @classmethod
+    async def create_access_token(cls, member_id: int, token: str):
+        await cls.r.set(f'access_token:{token}', member_id, expire=86400)  # 1 Day
+
+    @classmethod
+    async def create_refresh_token(cls, member_id: int, token: str):
+        await cls.r.set(f'refresh_token:{token}', member_id, expire=30 * 86400)  # 30 Days
+
+    @classmethod
+    async def revoke_access_token(cls, token: str):
+        await cls.r.delete(f'access_token:{token}')
+
+    @classmethod
+    async def revoke_refresh_token(cls, token: str):
+        await cls.r.delete(f'refresh_token:{token}')
+
+    @classmethod
+    async def get_access_token(cls, token: str) -> Optional[int]:
+        member_id = await cls.r.get(f'access_token:{token}')
+        if member_id:
+            return int(member_id)
+
+    @classmethod
+    async def get_refresh_token(cls, token: str) -> Optional[int]:
+        member_id = await cls.r.get(f'refresh_token:{token}')
+        if member_id:
+            return int(member_id)
 
 
 class MemberExternalDAO:

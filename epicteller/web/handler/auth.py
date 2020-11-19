@@ -1,12 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from sanic import response
-from sanic.request import Request
-from sanic.views import HTTPMethodView
+
+from fastapi import APIRouter, Body, HTTPException
+from pydantic import BaseModel
 
 from epicteller.core.controller import member as member_ctl
-from epicteller.web import app
-from epicteller.web.app import auth
+
+router = APIRouter()
+
+
+class Token(BaseModel):
+    access_token: str
+    refresh_token: str
 
 
 @app.route('/register')
@@ -37,6 +42,14 @@ class LoginHandler(HTTPMethodView):
             return response.json({'error': 'Email or password incorrect.'}, status=403)
         member = await member_ctl.get_member(email=email)
         return response.json(member)
+
+
+@router.post('/login')
+async def login(email: str = Body(...), password: str = Body(...)):
+    matched = await member_ctl.check_member_email_password(email, password)
+    if not matched:
+        return HTTPException(404, detail='邮箱或密码不正确')
+    member = await
 
 
 @app.route('/logout')
