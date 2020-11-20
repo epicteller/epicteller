@@ -34,6 +34,7 @@ pillow = "*"
 fastapi = "*"
 uvicorn = "*"
 python-jose = "*"
+dataclasses-json = "*"
 
 [dev-packages]
 # Testing

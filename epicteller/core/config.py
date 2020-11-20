@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import base64
 import os
 import random
 
@@ -8,9 +9,10 @@ class Config:
     APP_NAME = os.environ.get('APP_NAME') or 'epicteller'
 
     if os.environ.get('SECRET_KEY'):
-        SECRET_KEY = os.environ.get('SECRET_KEY')
+        secret = os.getenv('SECRET_KEY')
+        SECRET_KEY = base64.urlsafe_b64decode(secret + '=' * (4 - len(secret) % 4))
     else:
-        SECRET_KEY = 'SECRET_KEY_ENV_VAR_NOT_SET'
+        SECRET_KEY = b'SECRET_KEY_ENV_VAR_NOT_SET'
         print('SECRET KEY ENV VAR NOT SET! SHOULD NOT SEE IN PRODUCTION')
 
     # Analytics
@@ -39,3 +41,6 @@ class Config:
     RESPONSE_TIMEOUT = 600
 
     RUNTIME_ID = f'{random.randint(0, 9999):04d}'
+
+    ACCESS_TOKEN_TTL = 86400
+    REFRESH_TOKEN_TTL = 30 * 86400

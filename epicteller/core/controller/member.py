@@ -1,11 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import secrets
+import time
 from typing import Optional, Dict, Union, Iterable
 
 import bcrypt
 
+from epicteller.core.config import Config
 from epicteller.core.dao.member import MemberDAO, MemberExternalDAO
-from epicteller.core.model.member import Member
+from epicteller.core.model.member import Member, Credential
 from epicteller.core.util.enum import ExternalType
 
 
@@ -67,3 +70,11 @@ async def get_member_by_external(external_type: ExternalType, external_id: str) 
     if not member_id:
         return None
     return await get_member(member_id)
+
+
+async def create_credential(member_id: int):
+    token = secrets.token_urlsafe(32)
+    ttl = Config.REFRESH_TOKEN_TTL
+    now = int(time.time())
+    expired_at = now + ttl
+    credential = Credential(member_id=member_id, token=token, created_at=now, expired_at=expired_at)
