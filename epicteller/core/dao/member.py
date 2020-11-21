@@ -1,16 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import json
 import time
-from dataclasses import asdict
 from typing import Optional, Dict, Iterable
 
 import base62
 from sqlalchemy import select, and_
 
 from epicteller.core import redis
-from epicteller.core.config import Config
-from epicteller.core.model.member import Member, Credential
+from epicteller.core.model.member import Member
 from epicteller.core.tables import table
 from epicteller.core.util import ObjectDict
 from epicteller.core.util.enum import ExternalType
@@ -102,40 +99,6 @@ class MemberDAO:
         values.id = result.lastrowid
         member = _format_member(values)
         return member
-
-    @classmethod
-    async def create_access_token(cls, member_id: int, token: str):
-        ttl = Config.ACCESS_TOKEN_TTL
-        now = int(time.time())
-        expired_at = now + ttl
-        data = Credential(member_id=member_id, token=token, created_at=now, expired_at=expired_at).to_json()
-        await cls.r.set(f'access_token:{token}', data, expire=ttl)
-
-    @classmethod
-    async def create_refresh_token(cls, member_id: int, token: str):
-        await cls.r.set(f'access_token:{token}', data, expire=ttl)
-
-    @classmethod
-    async def revoke_access_token(cls, token: str):
-        await cls.r.expire(f'access_token:{token}', 10)
-
-    @classmethod
-    async def revoke_refresh_token(cls, token: str):
-        await cls.r.expire(f'refresh_token:{token}', 10)
-
-    @classmethod
-    async def get_access_token(cls, token: str) -> Optional[Credential]:
-        data = await cls.r.get(f'access_token:{token}')
-        if not data:
-            return
-        return Credential.from_json(data)
-
-    @classmethod
-    async def get_refresh_token(cls, token: str) -> Optional[Credential]:
-        data = await cls.r.get(f'refresh_token:{token}')
-        if not data:
-            return
-        return Credential.from_json(data)
 
 
 class MemberExternalDAO:

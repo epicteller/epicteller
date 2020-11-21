@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 from fastapi import FastAPI
 
-from epicteller.core.config import Config
+from epicteller.web.handler import auth
 
 app = FastAPI()
+
+app.include_router(auth.router, prefix='/auth')

@@ -1,14 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import secrets
-import time
 from typing import Optional, Dict, Union, Iterable
 
 import bcrypt
 
-from epicteller.core.config import Config
 from epicteller.core.dao.member import MemberDAO, MemberExternalDAO
-from epicteller.core.model.member import Member, Credential
+from epicteller.core.model.member import Member
 from epicteller.core.util.enum import ExternalType
 
 
@@ -38,13 +35,15 @@ async def batch_get_member(member_ids: Iterable[int]=None, *,
     return {}
 
 
-async def check_member_email_password(email: str, password: str) -> bool:
+async def check_member_email_password(email: str, password: str) -> Optional[Member]:
     email = email.lower()
     member = await get_member(email=email)
     if not member:
-        return False
+        return
     matched = bcrypt.checkpw(password.encode('utf8'), member.passhash.encode('utf8'))
-    return matched
+    if not matched:
+        return
+    return member
 
 
 async def register_member(name: str, email: str, password: str) -> Member:
@@ -72,9 +71,3 @@ async def get_member_by_external(external_type: ExternalType, external_id: str) 
     return await get_member(member_id)
 
 
-async def create_credential(member_id: int):
-    token = secrets.token_urlsafe(32)
-    ttl = Config.REFRESH_TOKEN_TTL
-    now = int(time.time())
-    expired_at = now + ttl
-    credential = Credential(member_id=member_id, token=token, created_at=now, expired_at=expired_at)
