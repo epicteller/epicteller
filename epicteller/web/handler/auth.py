@@ -4,7 +4,7 @@ from fastapi import APIRouter, Body, Depends
 from jose import jwt, JWTError
 from pydantic import Field
 from pydantic.main import BaseModel
-from pydantic.networks import validate_email, EmailStr
+from pydantic.networks import EmailStr
 
 from epicteller.core.config import Config
 from epicteller.core.controller import credential as credential_ctl
