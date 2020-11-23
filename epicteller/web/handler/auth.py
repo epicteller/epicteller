@@ -9,7 +9,9 @@ from pydantic.networks import EmailStr
 from epicteller.core.config import Config
 from epicteller.core.controller import credential as credential_ctl
 from epicteller.core.controller import member as member_ctl
-from epicteller.web.error.auth import IncorrectEMailPasswordError, UnauthorizedError
+from epicteller.web import worker
+from epicteller.web.error.auth import IncorrectEMailPasswordError, UnauthorizedError, EMailUsedError, EMailValidateError
+from epicteller.web.controller import auth as auth_web_ctl
 
 router = APIRouter()
 
@@ -23,7 +25,16 @@ class RegisterForm(BaseModel):
 
 @router.post('/register')
 async def register(register_form: RegisterForm):
-    pass
+    member = await member_ctl.get_member(email=register_form.email)
+    if member:
+        raise EMailUsedError()
+    email = await credential_ctl.get_email_validate_token(register_form.validate_token)
+    if email != register_form.email:
+        raise EMailValidateError()
+    member = await member_ctl.create_member(name=register_form.name,
+                                            email=register_form.email,
+                                            password=register_form.password)
+    return await auth_web_ctl.create_credential_pair(member.id)
 
 
 class LoginForm(BaseModel):
@@ -38,12 +49,7 @@ async def login(login_form: LoginForm):
     member = await member_ctl.check_member_email_password(email, password)
     if not member:
         return IncorrectEMailPasswordError()
-    access_credential = await credential_ctl.create_access_credential(member.id)
-    refresh_credential = await credential_ctl.create_refresh_credential(member.id)
-    return {
-        'access_token': access_credential.jwt,
-        'refresh_token': refresh_credential.jwt,
-    }
+    return await auth_web_ctl.create_credential_pair(member.id)
 
 
 @router.post('/refresh')
@@ -66,3 +72,13 @@ async def refresh(token: str = Body(...)):
         'access_token': access_credential.jwt,
         'refresh_token': refresh_credential.jwt,
     }
+
+
+@router.post('/email_validate')
+async def email_validate(email: EmailStr = Body(...)):
+    member = await member_ctl.get_member(email=email)
+    if member:
+        return EMailUsedError()
+    token = await credential_ctl.set_email_validate_token(email)
+    await worker.email.send_email(email)
+    return {'success': True}

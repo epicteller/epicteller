@@ -46,7 +46,7 @@ async def check_member_email_password(email: str, password: str) -> Optional[Mem
     return member
 
 
-async def register_member(name: str, email: str, password: str) -> Member:
+async def create_member(name: str, email: str, password: str) -> Member:
     passhash = _gen_passhash(password)
     email = email.lower()
     return await MemberDAO.create_member(name, email, passhash)

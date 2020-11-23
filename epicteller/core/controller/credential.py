@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import secrets
+import string
 import time
 from typing import Optional
 
@@ -41,3 +42,13 @@ async def get_access_credential(token: str) -> Optional[Credential]:
 
 async def get_refresh_credential(token: str) -> Optional[Credential]:
     return await CredentialDAO.get_refresh_credential(token)
+
+
+async def set_email_validate_token(email: str) -> str:
+    token = ''.join(secrets.choice(string.digits) for _ in range(6))
+    await CredentialDAO.set_email_validate_token(token, email)
+    return token
+
+
+async def get_email_validate_token(token: str) -> Optional[str]:
+    return await CredentialDAO.get_email_validate_token(token)
