@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from fastapi import APIRouter, Body, Depends
+from fastapi import APIRouter, Body, Depends, BackgroundTasks
 from jose import jwt, JWTError
 from pydantic import Field
 from pydantic.main import BaseModel
@@ -19,7 +19,7 @@ router = APIRouter()
 class RegisterForm(BaseModel):
     email: EmailStr
     validate_token: str
-    password: str = Field(min_length=8, max_length=50)
+    password: str = Field(min_length=10, max_length=50)
     name: str
 
 
@@ -53,15 +53,8 @@ async def login(login_form: LoginForm):
 
 
 @router.post('/refresh')
-async def refresh(token: str = Body(...)):
-    try:
-        payload = jwt.decode(token, Config.SECRET_KEY)
-        refresh_token: str = payload.get('sub')
-        if not refresh_token:
-            return UnauthorizedError(detail='Invalid token.')
-    except JWTError:
-        return UnauthorizedError(detail='Invalid token.')
-    refresh_credential = await credential_ctl.get_refresh_credential(refresh_token)
+async def refresh(token: str = Body(..., embed=True)):
+    refresh_credential = await credential_ctl.get_refresh_credential(token)
     if not refresh_credential or refresh_credential.is_expired:
         return UnauthorizedError(detail='Credential expired.')
     access_credential = await credential_ctl.create_access_credential(refresh_credential.member_id)
@@ -74,11 +67,11 @@ async def refresh(token: str = Body(...)):
     }
 
 
-@router.post('/email_validate')
-async def email_validate(email: EmailStr = Body(...)):
+@router.post('/email-validate')
+async def email_validate(tasks: BackgroundTasks, email: EmailStr = Body(..., embed=True)):
     member = await member_ctl.get_member(email=email)
     if member:
         return EMailUsedError()
     token = await credential_ctl.set_email_validate_token(email)
-    await worker.email.send_email(email)
+    tasks.add_task(worker.email.send_register_email, email, token)
     return {'success': True}

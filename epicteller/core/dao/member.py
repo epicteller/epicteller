@@ -32,7 +32,7 @@ def _format_member(result) -> Optional[Member]:
 
 class MemberDAO:
     t = table.member
-    r = redis.redis
+    r = redis.pool
     select_clause = select([
         t.c.id,
         t.c.url_token,

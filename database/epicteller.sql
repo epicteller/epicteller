@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS `member_external_id`
     `member_id`   BIGINT(20) UNSIGNED NOT NULL,
     `type`        TINYINT(4)          NOT NULL,
     `external_id` VARCHAR(200)        NOT NULL,
+    `state`       TINYINT(4)          NOT NULL,
     PRIMARY KEY (`id`),
     KEY `idx_member` (`member_id`),
     UNIQUE KEY `unq_member_type` (`member_id`, `type`),

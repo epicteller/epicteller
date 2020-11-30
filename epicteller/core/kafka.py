@@ -76,7 +76,7 @@ class Bus:
             self.consumer.subscribe(self.topics)
             await self.consumer.start()
         except Exception:
-            asyncio.get_event_loop().stop()
+            self.loop.stop()
             raise
         try:
             # Consume messages

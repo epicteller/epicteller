@@ -27,7 +27,6 @@ aioredis = "*"
 pybase62 = "*"
 aiokafka = "*"
 bcrypt = "*"
-nonebot = ">=1.5.0"
 httpx = "*"
 cos-python-sdk-v5 = "*"
 pillow = "*"
@@ -36,6 +35,7 @@ uvicorn = "*"
 python-jose = "*"
 dataclasses-json = "*"
 email-validator = "*"
+nonebot2 = "==2.0.0a6"
 
 [dev-packages]
 # Testing

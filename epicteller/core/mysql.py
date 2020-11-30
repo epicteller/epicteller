@@ -23,6 +23,7 @@ class DBProxy(object):
     def __init__(self, user, password, host, port, database,
                  longquery_time=1.0, minsize=1, maxsize=10,
                  pool_recycle=1800, connect_timeout=10):
+        self.master = None
         self.user = user
         self.password = password
         self.host = host
@@ -33,10 +34,10 @@ class DBProxy(object):
         self.maxsize = maxsize
         self.pool_recycle = pool_recycle
         self.connect_timeout = connect_timeout
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(self._init())
 
-    async def _init(self):
+    async def init(self):
+        if self.master:
+            return
         self.master = await async_create_engine(user=self.user, password=self.password,
                                                 host=self.host, port=self.port, db=self.database,
                                                 charset='utf8mb4',
@@ -47,6 +48,7 @@ class DBProxy(object):
                                                 connect_timeout=self.connect_timeout)
 
     async def execute(self, statement, *multiparams, **params):
+        await self.init()
         engine = self.master
         conn = _g.get(None)
         if not conn:
@@ -117,6 +119,9 @@ class Tables(object):
         engine = create_engine(self.url)
         self.meta = MetaData()
         self.meta.reflect(bind=engine)
+
+    async def init(self):
+        await self.__db.init()
 
     @property
     def db(self):
