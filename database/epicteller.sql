@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS `member`
     `name`      VARCHAR(50)         NOT NULL,
     `email`     VARCHAR(200)        NOT NULL,
     `passhash`  VARCHAR(100)        NOT NULL,
-    `headline`  VARCHAR(140)        NOT NULL DEFAULT '',
+    `headline`  VARCHAR(1024)       NOT NULL DEFAULT '',
     `avatar`    VARCHAR(200)        NOT NULL DEFAULT '',
     `created`   BIGINT(20) UNSIGNED NOT NULL DEFAULT 0,
     `updated`   BIGINT(20) UNSIGNED NOT NULL DEFAULT 0,

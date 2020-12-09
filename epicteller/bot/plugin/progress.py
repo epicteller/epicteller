@@ -65,7 +65,7 @@ async def _(bot: Bot, event: Event, state: dict):
         await end.finish(f"✨ 章节名已保存为「{title}」")
     else:
         await end.pause('🤔 看起来你还没有给刚刚结束的章节起一个名字，请直接回复你所拟定好的标题。\n'
-                        f'如果暂时没想好，也可以回复任意的空白字符，标题会以「{episode.title}」为名保存。')
+                        f'如果暂时没想好，请回复任意的空白字符，标题会以「{episode.title}」为名保存。')
 
 
 @end.got('title')

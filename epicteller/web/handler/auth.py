@@ -12,6 +12,7 @@ from epicteller.core.controller import member as member_ctl
 from epicteller.web import worker
 from epicteller.web.error.auth import IncorrectEMailPasswordError, UnauthorizedError, EMailUsedError, EMailValidateError
 from epicteller.web.controller import auth as auth_web_ctl
+from epicteller.web.model import BasicResponse
 
 router = APIRouter()
 
@@ -52,6 +53,13 @@ async def login(login_form: LoginForm):
     return await auth_web_ctl.create_credential_pair(member.id)
 
 
+@router.post('/logout', response_model=BasicResponse)
+async def logout(access_token: str = Body(...), refresh_token: str = Body(...)):
+    await credential_ctl.revoke_access_credential(access_token)
+    await credential_ctl.revoke_refresh_credential(refresh_token)
+    return BasicResponse()
+
+
 @router.post('/refresh')
 async def refresh(token: str = Body(..., embed=True)):
     refresh_credential = await credential_ctl.get_refresh_credential(token)
@@ -67,11 +75,11 @@ async def refresh(token: str = Body(..., embed=True)):
     }
 
 
-@router.post('/email-validate')
+@router.post('/email-validate', response_model=BasicResponse)
 async def email_validate(tasks: BackgroundTasks, email: EmailStr = Body(..., embed=True)):
     member = await member_ctl.get_member(email=email)
     if member:
-        return EMailUsedError()
+        raise EMailUsedError()
     token = await credential_ctl.set_email_validate_token(email)
     tasks.add_task(worker.email.send_register_email, email, token)
-    return {'success': True}
+    return BasicResponse()
