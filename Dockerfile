@@ -1,6 +1,6 @@
 # ==================================== BASE ====================================
-ARG INSTALL_PYTHON_VERSION=${INSTALL_PYTHON_VERSION:-3.8}
-FROM python:${INSTALL_PYTHON_VERSION}-slim-buster AS base
+ARG INSTALL_PYTHON_VERSION=${INSTALL_PYTHON_VERSION:-3.9}
+FROM python:${INSTALL_PYTHON_VERSION}-slim AS base
 
 WORKDIR /app
 COPY ["./", "./"]
@@ -9,7 +9,12 @@ ENV PYTHONPATH "${PYTHONPATH}:."
 
 # =============================== PRODUCTION-BASE ==============================
 FROM base AS production-base
-RUN pipenv install --pypi-mirror https://pypi.python.org/simple
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends gcc libc6-dev  \
+    && rm -rf /var/lib/apt/lists/* \
+    && pipenv install \
+    && apt-get purge -y --auto-remove gcc libc6-dev
 
 # ================================= PRODUCTION =================================
 FROM production-base AS production
