@@ -1,21 +1,21 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import asyncio
-from os import path
 
 import nonebot
 
-from epicteller.bot import bus, get_bot
-
-bot = get_bot()
-app = bot.asgi
+from epicteller.bot import start_bus
+from epicteller.core import redis
 
 
 def main():
-    loop = asyncio.get_event_loop()
-    loop.create_task(bus.run())
+    nonebot.init(debug=True, command_start={'/', '!', "！"})
+    nonebot.load_builtin_plugins()
+    nonebot.load_plugins('plugin')
+    nonebot.get_driver().on_startup(redis.pool.init)
+    nonebot.get_driver().on_startup(start_bus)
 
-    nonebot.run(host='0.0.0.0', port=10090, loop=loop, debug=True)
+    nonebot.run(host='0.0.0.0', port=10090)
 
 
 if __name__ == '__main__':

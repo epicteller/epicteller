@@ -36,7 +36,7 @@ def _format_dice(result) -> Optional[Dice]:
 
 class DiceDAO:
     t = table.dice
-    r = redis.redis
+    r = redis.pool
 
     select_clause = select([
         t.c.id,
@@ -94,4 +94,4 @@ class DiceDAO:
 
     @classmethod
     async def update_memory_dump(cls, runtime_id: str, data: bytes):
-        await cls.r.set(f'memory_dump:{runtime_id}', data, expire=86400)
+        await cls.r.pool.set(f'memory_dump:{runtime_id}', data, expire=86400)

@@ -6,6 +6,7 @@ import bcrypt
 
 from epicteller.core.dao.member import MemberDAO, MemberExternalDAO
 from epicteller.core.model.member import Member
+from epicteller.core.util import validator
 from epicteller.core.util.enum import ExternalType
 
 
@@ -35,19 +36,25 @@ async def batch_get_member(member_ids: Iterable[int]=None, *,
     return {}
 
 
-async def check_member_email_password(email: str, password: str) -> bool:
+async def check_member_email_password(email: str, password: str) -> Optional[Member]:
     email = email.lower()
     member = await get_member(email=email)
     if not member:
-        return False
+        return
     matched = bcrypt.checkpw(password.encode('utf8'), member.passhash.encode('utf8'))
-    return matched
+    if not matched:
+        return
+    return member
 
 
-async def register_member(name: str, email: str, password: str) -> Member:
+async def create_member(name: str, email: str, password: str) -> Member:
     passhash = _gen_passhash(password)
     email = email.lower()
-    return await MemberDAO.create_member(name, email, passhash)
+    member = await MemberDAO.create_member(name, email, passhash)
+    external_id = validator.parse_external_id_from_qq_email(email)
+    if external_id:
+        await bind_member_external_id(member.id, ExternalType.QQ, external_id)
+    return member
 
 
 async def bind_member_external_id(member_id: int, external_type: ExternalType, external_id: str) -> None:
@@ -67,3 +74,7 @@ async def get_member_by_external(external_type: ExternalType, external_id: str) 
     if not member_id:
         return None
     return await get_member(member_id)
+
+
+async def update_member(member_id: int, **kwargs):
+    await MemberDAO.update_member(member_id, **kwargs)

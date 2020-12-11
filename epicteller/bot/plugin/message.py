@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from nonebot import on_command, CommandSession
+from nonebot import on_message, Bot
+from nonebot.typing import Event
+from nonebot.rule import regex
 
 from epicteller.bot.controller import base
 from epicteller.core.controller import message as message_ctl
@@ -11,34 +13,37 @@ from epicteller.core.util import imghosting
 from epicteller.core.util.enum import MessageType
 
 
-@on_command('say', only_to_me=False, privileged=True)
-async def say(session: CommandSession):
-    episode: Episode = session.get('episode')
-    character: Character = session.get('character')
-    message_type: MessageType = session.get('message_type')
-    content: MessageContent = session.get('content')
-    is_gm: bool = session.get('is_gm')
+say = on_message(rule=regex(r'^[^()（）]'), priority=99999)
+
+
+@say.handle()
+async def _(bot: Bot, event: Event, state: dict):
+    await prepare(bot, event, state)
+    episode: Episode = state.get('episode')
+    character: Character = state.get('character')
+    message_type: MessageType = state.get('message_type')
+    content: MessageContent = state.get('content')
+    is_gm: bool = state.get('is_gm')
 
     await message_ctl.create_message(episode, character, message_type, content, is_gm)
 
 
-@say.args_parser
-async def _(session: CommandSession):
-    is_prepared = await base.prepare_context(session)
+async def prepare(bot: Bot, event: Event, state: dict):
+    is_prepared = await base.prepare_context(say, bot, event, state)
     if not is_prepared:
-        session.finish()
-    msg_text = session.current_arg_text.strip()
-    msg_images = session.current_arg_images
+        await say.finish()
+    msg_text = event.plain_text.strip()
+    msg_images = [i for i in event.message if i.type == 'image']
     if msg_text:
         message_type = MessageType.TEXT
         content = TextMessageContent(text=msg_text)
     elif msg_images:
         message_type = MessageType.IMAGE
-        image_origin_url = msg_images[0]
+        image_origin_url = msg_images[0]['data']['url']
         image_token = await imghosting.upload_image_from_url(image_origin_url)
         content = ImageMessageContent(image=image_token)
     else:
-        session.finish()
+        await say.finish()
         return
-    session.state['message_type'] = message_type
-    session.state['content'] = content
+    state['message_type'] = message_type
+    state['content'] = content
