@@ -39,4 +39,4 @@ jobs:
           port: ${{ secrets.PORT }}
           username: ${{ secrets.USER }}
           key: ${{ secrets.SSH_KEY }}
-          script: cd ${{ secrets.REMOTE_PATH }} && ./deploy.sh
+          script: cd ${{ secrets.REMOTE_PATH }} && sudo ./deploy.sh
