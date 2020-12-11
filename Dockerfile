@@ -9,7 +9,7 @@ ENV PYTHONPATH "${PYTHONPATH}:."
 
 # =============================== PRODUCTION-BASE ==============================
 FROM base AS production-base
-RUN pipenv --bare install
+RUN pipenv install --pypi-mirror https://pypi.python.org/simple
 
 # ================================= PRODUCTION =================================
 FROM production-base AS production
