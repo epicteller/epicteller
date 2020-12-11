@@ -117,4 +117,8 @@ async def must_get_dice_result(bot: Bot, event: Event, state: dict) -> (Result, 
         if errmsg:
             await dice.finish(errmsg)
         break
+    if reason:
+        reason = reason.strip()
+    if not reason:
+        reason = None
     return result, reason
