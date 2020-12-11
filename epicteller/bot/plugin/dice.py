@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 from typing import Iterable, Optional
 
-from aiocqhttp import MessageSegment
+from nonebot.adapters.cqhttp import MessageSegment
 from datum import error as datum_error
 from datum.base import Result
 from lark import LarkError, UnexpectedCharacters, UnexpectedToken

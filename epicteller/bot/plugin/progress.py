@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from aiocqhttp import Event
 from nonebot import on_command, Bot
-from nonebot.typing import Matcher
+from nonebot.typing import Matcher, Event
 
 from epicteller.core import error
 from epicteller.core.controller import campaign as campaign_ctl
