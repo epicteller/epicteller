@@ -10,7 +10,7 @@ from epicteller.core import redis
 
 def main():
     nonebot.init(debug=True, command_start={'/', '!', "！"})
-    nonebot.load_plugins('epicteller.bot.plugin')
+    nonebot.load_plugins('epicteller/bot/plugin')
     nonebot.get_driver().on_startup(redis.pool.init)
     nonebot.get_driver().on_startup(start_bus)
 
