@@ -9,7 +9,7 @@ ENV PYTHONPATH "${PYTHONPATH}:."
 
 # =============================== PRODUCTION-BASE ==============================
 FROM base AS production-base
-RUN pipenv install
+RUN pipenv --bare install
 
 # ================================= PRODUCTION =================================
 FROM production-base AS production
