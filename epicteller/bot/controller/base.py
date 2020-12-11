@@ -17,7 +17,7 @@ async def prepare_context(matcher: Matcher, bot: Bot, event: Event, state: dict)
         return False
     room_external_id = str(event.group_id)
     member_external_id = str(event.user_id)
-    name = event.sender['nickname']
+    name = event.sender['card'] or event.sender['nickname']
 
     room = await room_ctl.get_room_by_external(ExternalType.QQ, room_external_id)
     if not room:
