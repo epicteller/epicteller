@@ -19,7 +19,7 @@ supervisor = ">=4.0.3"
 # Environment variable parsing
 environs = ">=4.2.0"
 lark-parser = "*"
-epicteller-datum = ">=0.4.0"
+epicteller-datum = ">=0.4.1"
 ipython = ">=7.7.0"
 aiomysql = "*"
 quart = "*"
