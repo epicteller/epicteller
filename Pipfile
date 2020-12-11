@@ -36,6 +36,7 @@ python-jose = "*"
 dataclasses-json = "*"
 email-validator = "*"
 nonebot2 = "==2.0.0a6"
+lru-dict = "*"
 
 [dev-packages]
 # Testing

@@ -46,3 +46,11 @@ async def create_message(episode: Episode, character: Optional[Character], messa
     else:
         character_id = character.id
     return await MessageDAO.create_message(episode.id, character_id, message_type, content_data, is_gm)
+
+
+async def remove_message(message_id: int):
+    await MessageDAO.update_message(message_id, is_removed=1)
+
+
+async def recover_message(message_id: int):
+    await MessageDAO.update_message(message_id, is_removed=0)
