@@ -39,6 +39,7 @@ async def prepare_context(matcher: Matcher, bot: Bot, event: Event, state: dict)
         async with table.db.begin():
             character = await character_ctl.create_character(campaign, name, member, '', '')
             await character_ctl.bind_character_external(character, ExternalType.QQ, member_external_id)
+            state['character'] = character
     elif not member:
         if not await character_ctl.check_character_external(character, ExternalType.QQ, member_external_id):
             await matcher.finish(f'冒充其他用户的角色')

@@ -3,23 +3,34 @@
 from dataclasses import dataclass
 from typing import Optional
 
+from nonebot.adapters.cqhttp import MessageSegment
+
+from epicteller.core.util import imghosting
 from epicteller.core.util.enum import MessageType, DiceType
 from epicteller.core.util.typing import DiceValue_T
 
 
 @dataclass
 class MessageContent:
-    pass
+    def to_message(self) -> MessageSegment:
+        raise NotImplementedError
 
 
 @dataclass
 class TextMessageContent(MessageContent):
     text: str
 
+    def to_message(self):
+        return MessageSegment.text(self.text)
+
 
 @dataclass
 class ImageMessageContent(MessageContent):
     image: str
+
+    def to_message(self):
+        image_url = imghosting.get_full_url(self.image)
+        return MessageSegment.image(image_url)
 
 
 @dataclass
@@ -32,6 +43,12 @@ class DiceMessageContent(MessageContent):
 
     def __post_init__(self):
         self.dice_type = DiceType(self.dice_type)
+
+    def to_message(self):
+        reason: str = ''
+        if self.reason:
+            reason = f" ({self.reason})"
+        return MessageSegment.text(f"[骰子{reason}: {self.expression} = {self.value}]")
 
 
 @dataclass
