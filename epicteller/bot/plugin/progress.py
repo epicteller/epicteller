@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from nonebot import on_command, Bot
+from nonebot.adapters.cqhttp import Message
 from nonebot.typing import Matcher, Event
 
 from epicteller.core import error
@@ -56,21 +57,26 @@ async def _(bot: Bot, event: Event, state: dict):
         await end.finish('❌ 章节已经结束了哦。')
     await episode_ctl.end_episode(episode)
     await end.send('—— 💤 章节结束 💤 ——')
-    possible_title = str(event.message).strip()
+    possible_title = await extract_title(event.message)
     if possible_title or episode.title != const.DEFAULT_EPISODE_TITLE:
         title = possible_title or episode.title
         if possible_title:
             await episode_ctl.rename_episode(episode, title)
         await end.finish(f"✨ 章节名已保存为「{title}」")
     else:
-        await end.pause('🤔 看起来你还没有给刚刚结束的章节起一个名字，请直接回复你所拟定好的标题。\n'
-                        f'如果暂时没想好，请回复任意的空白字符，标题会以「{episode.title}」为名保存。')
+        await end.send('🤔 看起来你还没有给刚刚结束的章节起一个名字，请直接键入你所拟定好的标题。\n'
+                       f'如果暂时没想好，请键入任意空白字符，标题会以「{episode.title}」为名保存。')
 
 
-@end.got('title')
+async def extract_title(message: Message):
+    message = Message([seg for seg in message if seg.type == 'text'])
+    return str(message)
+
+
+@end.receive()
 async def process_title(bot: Bot, event: Event, state: dict):
     episode: Episode = state.get('episode')
-    possible_title = str(state['title']).strip()
+    possible_title = await extract_title(event.message)
     if not possible_title:
         await end.finish(f"✔️看起来你暂时还没有想好合适的标题，章节暂时以「{episode.title}」为名保存。\n"
                          f"如果之后有了合适的想法，也可以在网站上直接修改标题。")
