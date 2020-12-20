@@ -6,12 +6,13 @@ from nonebot.adapters.cqhttp import MessageSegment
 from datum import error as datum_error
 from datum.base import Result
 from lark import LarkError, UnexpectedCharacters, UnexpectedToken
-from nonebot import on_message
+from nonebot import on_message, on_command, permission
 from nonebot.adapters.cqhttp import Bot
 from nonebot.rule import regex
 from nonebot.typing import Event
 
 from epicteller.bot.controller import base
+from epicteller.core.config import Config
 from epicteller.core.controller import dice as dice_ctl
 from epicteller.core.controller import message as message_ctl
 from epicteller.core.model.character import Character
@@ -122,3 +123,24 @@ async def must_get_dice_result(bot: Bot, event: Event, state: dict) -> (Result, 
     if not reason:
         reason = None
     return result, reason
+
+
+refresh = on_command('refresh', permission=permission.PRIVATE_FRIEND)
+
+
+@refresh.handle()
+async def _(bot: Bot, event: Event, state: dict):
+    seed = event.raw_message.encode('utf8')
+    if not seed:
+        seed = None
+    await dice_ctl.refresh_randomizer(seed)
+    await refresh.finish(str(Config.RUNTIME_ID))
+
+
+predict = on_command('p', permission=permission.PRIVATE_FRIEND)
+
+
+@predict.handle()
+async def _(bot: Bot, event: Event, state: dict):
+    await dice_ctl.update_memory_dump()
+    await predict.finish(str(Config.RUNTIME_ID))
