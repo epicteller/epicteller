@@ -17,6 +17,10 @@ class EpisodeState(IntEnum):
     ENDED = 3
 
 
+class CombatState(IntEnum):
+    START = 0
+
+
 class DiceType(IntEnum):
     SCALAR = 1
     ARRAY = 2

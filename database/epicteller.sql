@@ -196,3 +196,21 @@ CREATE TABLE IF NOT EXISTS `message`
     KEY `idx_character_id` (`character_id`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `combat_meta`
+(
+    `id`          BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+    `url_token`   VARCHAR(200)        NOT NULL,
+    `campaign_id` BIGINT(20) UNSIGNED NOT NULL,
+    `state`       TINYINT(2) UNSIGNED NOT NULL DEFAULT 0,
+    `is_removed`  TINYINT(1) UNSIGNED NOT NULL DEFAULT 0,
+    `data`        JSON                NOT NULL,
+    `started_at`  BIGINT(20) UNSIGNED NOT NULL,
+    `ended_at`    BIGINT(20) UNSIGNED NOT NULL,
+    `created`     BIGINT(20) UNSIGNED NOT NULL,
+    `updated`     BIGINT(20) UNSIGNED NOT NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `unq_url_token` (`url_token`),
+    KEY `idx_campaign_id` (`campaign_id`, `is_removed`, `id`)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4;
