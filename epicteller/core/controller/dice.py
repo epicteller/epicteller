@@ -30,6 +30,12 @@ async def update_memory_dump():
     await DiceDAO.update_memory_dump(Config.RUNTIME_ID, data)
 
 
+async def refresh_randomizer(seed: bytes = None):
+    global rand
+    rand = random.Random(seed)
+    await update_memory_dump()
+
+
 async def get_dice(dice_id: int=None, *, url_token: str=None) -> Optional[Dice]:
     if dice_id:
         return (await DiceDAO.batch_get_dice_by_id([dice_id])).get(dice_id)
