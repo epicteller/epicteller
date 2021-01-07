@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from dataclasses import dataclass
 from typing import Optional
+
+from pydantic import BaseModel
 
 from epicteller.core.util.enum import DiceType
 from epicteller.core.util.typing import DiceValue_T
 
 
-@dataclass
-class Dice:
+class Dice(BaseModel):
     id: int
     url_token: str
     character_id: int

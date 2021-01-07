@@ -1,22 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from dataclasses import dataclass
 from typing import Optional
 
 from nonebot.adapters.cqhttp import MessageSegment
+from pydantic import BaseModel
 
 from epicteller.core.util import imghosting
 from epicteller.core.util.enum import MessageType, DiceType
 from epicteller.core.util.typing import DiceValue_T
 
 
-@dataclass
-class MessageContent:
+class MessageContent(BaseModel):
     def to_message(self) -> MessageSegment:
         raise NotImplementedError
 
 
-@dataclass
 class TextMessageContent(MessageContent):
     text: str
 
@@ -24,7 +22,6 @@ class TextMessageContent(MessageContent):
         return MessageSegment.text(self.text)
 
 
-@dataclass
 class ImageMessageContent(MessageContent):
     image: str
 
@@ -33,7 +30,6 @@ class ImageMessageContent(MessageContent):
         return MessageSegment.image(image_url)
 
 
-@dataclass
 class DiceMessageContent(MessageContent):
     dice_type: DiceType
     reason: Optional[str]
@@ -51,8 +47,7 @@ class DiceMessageContent(MessageContent):
         return MessageSegment.text(f"[骰子{reason}: {self.expression} = {self.value}]")
 
 
-@dataclass
-class Message:
+class Message(BaseModel):
     id: int
     url_token: str
     episode_id: int

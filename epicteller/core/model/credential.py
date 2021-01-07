@@ -4,14 +4,13 @@ import datetime
 import time
 from dataclasses import dataclass
 
-from dataclasses_json import DataClassJsonMixin
 from jose import jwt
+from pydantic import BaseModel
 
 from epicteller.core.config import Config
 
 
-@dataclass
-class Credential(DataClassJsonMixin):
+class Credential(BaseModel):
     member_id: int
     token: str
     created_at: int

@@ -1,13 +1,21 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from dataclasses import dataclass
+from typing import Optional
+
+from pydantic import BaseModel
 
 from epicteller.core.util.enum import CombatState
 
 
-@dataclass
-class Combat:
+class Combat(BaseModel):
     id: int
     url_token: str
-    campaign_id: int
+    room_id: int
     state: CombatState
+
+
+class CombatToken(BaseModel):
+    name: str
+    initiative: int
+    character_id: Optional[int]
+

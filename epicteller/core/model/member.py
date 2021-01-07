@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from dataclasses import dataclass
+
+from pydantic import BaseModel
 
 
-@dataclass
-class Member:
+class Member(BaseModel):
     id: int
     url_token: str
     name: str

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 from typing import Optional, Iterable, Dict, Union
 
-from epicteller.core.dao.character import CharacterDAO, CharacterExternalDAO
+from epicteller.core.dao.character import CharacterDAO, CharacterExternalDAO, CharacterCampaignDAO
 from epicteller.core.model.campaign import Campaign
 from epicteller.core.model.character import Character
 from epicteller.core.model.member import Member
@@ -27,7 +27,10 @@ async def batch_get_character(character_ids: Iterable[int]=None, *,
 
 
 async def get_character_by_campaign_name(campaign: Campaign, name: str) -> Optional[Character]:
-    return await CharacterDAO.get_character_by_campaign_name(campaign.id, name)
+    character_id = await CharacterCampaignDAO.get_character_id_by_campaign_name(campaign.id, name)
+    if not character_id:
+        return
+    return await get_character(character_id)
 
 
 async def check_character_external(character: Character, external_type: ExternalType, external_id: str) -> bool:
@@ -49,7 +52,11 @@ async def bind_character_external(character: Character, external_type: ExternalT
     await CharacterExternalDAO.bind_character_external_id(character.id, external_type, external_id)
 
 
-async def create_character(campaign: Campaign, name: str, member: Optional[Member]=None,
+async def bind_character_campaign(character: Character, campaign: Campaign):
+    await CharacterCampaignDAO.bind_character_to_campaign(character.id, character.name, campaign.id)
+
+
+async def create_character(name: str, member: Optional[Member]=None,
                            avatar: str='', description: str='') -> Character:
     member_id = member.id if member else 0
-    return await CharacterDAO.create_character(member_id, campaign.id, name, avatar, description, {})
+    return await CharacterDAO.create_character(member_id, name, avatar, description, {})

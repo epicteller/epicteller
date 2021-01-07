@@ -37,8 +37,9 @@ async def prepare_context(matcher: Matcher, bot: Bot, event: Event, state: dict)
 
     if not character:
         async with table.db.begin():
-            character = await character_ctl.create_character(campaign, name, member, '', '')
+            character = await character_ctl.create_character(name, member)
             await character_ctl.bind_character_external(character, ExternalType.QQ, member_external_id)
+            await character_ctl.bind_character_campaign(character, campaign)
             state['character'] = character
     elif not member:
         if not await character_ctl.check_character_external(character, ExternalType.QQ, member_external_id):
