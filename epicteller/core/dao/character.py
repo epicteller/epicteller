@@ -6,7 +6,6 @@ from typing import List, Optional, Iterable, Dict
 
 import base62
 from sqlalchemy import select, and_
-from sqlalchemy.dialects.mysql import dialect as mysql_dialect
 from sqlalchemy.dialects.mysql import insert as mysql_insert
 
 from epicteller.core.model.character import Character
@@ -23,7 +22,6 @@ def _format_character(result) -> Optional[Character]:
         id=result.id,
         url_token=result.url_token,
         member_id=result.member_id,
-        campaign_id=result.campaign_id,
         name=result.name,
         avatar=result.avatar,
         description=result.description,
@@ -42,7 +40,6 @@ class CharacterDAO:
         t.c.url_token,
         t.c.name,
         t.c.member_id,
-        t.c.campaign_id,
         t.c.avatar,
         t.c.description,
         t.c.is_removed,
@@ -66,26 +63,11 @@ class CharacterDAO:
         return {row.url_token: _format_character(result) for row in rows}
 
     @classmethod
-    async def get_characters_by_campaign_id(cls, campaign_id: str) -> List[Character]:
-        query = cls.select_clause.where(cls.t.c.campaign_id == campaign_id)
-        results = await table.execute(query)
-        characters = [_format_character(room) for room in await results.fetchall()]
-        return characters
-
-    @classmethod
     async def get_characters_by_owner(cls, member_id: int) -> List[Character]:
         query = cls.select_clause.where(cls.t.c.owner_id == member_id)
         results = await table.execute(query)
         characters = [_format_character(room) for room in await results.fetchall()]
         return characters
-
-    @classmethod
-    async def get_character_by_campaign_name(cls, campaign_id: int, name: str) -> Optional[Character]:
-        query = cls.select_clause.where(and_(cls.t.c.campaign_id == campaign_id,
-                                             cls.t.c.name == name))
-        result = await table.execute(query)
-        row = await result.fetchone()
-        return _format_character(row)
 
     @classmethod
     async def update_character(cls, character_id: int, **kwargs) -> None:
@@ -95,14 +77,13 @@ class CharacterDAO:
         await table.execute(query)
 
     @classmethod
-    async def create_character(cls, member_id: int, campaign_id: int, name: str, avatar: str, description: str,
+    async def create_character(cls, member_id: int, name: str, avatar: str, description: str,
                                raw_data: dict) -> Character:
         created = int(time.time())
         url_token = base62.encode(get_id())
         values = ObjectDict(
             url_token=url_token,
             member_id=member_id,
-            campaign_id=campaign_id,
             name=name,
             avatar=avatar,
             description=description,
@@ -116,6 +97,43 @@ class CharacterDAO:
         values.id = result.lastrowid
         character = _format_character(values)
         return character
+
+
+class CharacterCampaignDAO:
+    t = table.character_campaign_index
+
+    @classmethod
+    async def get_character_id_by_campaign_name(cls, campaign_id: int, name: str) -> Optional[int]:
+        query = select([cls.t.c.character_id]).where(and_(cls.t.c.campaign_id == campaign_id,
+                                                          cls.t.c.name == name))
+        result = await table.execute(query)
+        row = await result.fetchone()
+        if not row:
+            return
+        return int(row.character_id)
+
+    @classmethod
+    async def get_character_ids_by_campaign_id(cls, campaign_id: int) -> List[int]:
+        query = select([cls.t.c.character_id]).where(cls.t.c.campaign_id == campaign_id)
+        results = await table.execute(query)
+        character_ids = [int(row.character_id) for row in await results.fetchall()]
+        return character_ids
+
+    @classmethod
+    async def bind_character_to_campaign(cls, character_id: int, name: str, campaign_id: int):
+        query = mysql_insert(cls.t).values(
+            character_id=character_id,
+            name=name,
+            campaign_id=campaign_id,
+        ).on_duplicate_key_update(
+            name=name,
+        )
+        await table.execute(query)
+
+    @classmethod
+    async def unbind_character_to_campaign(cls, character_id: int, campaign_id: int):
+        query = cls.t.delete().where(and_(cls.t.c.character_id == character_id, cls.t.c.campaign_id == campaign_id))
+        await table.execute(query)
 
 
 class CharacterExternalDAO:
@@ -145,5 +163,5 @@ class CharacterExternalDAO:
 
     @classmethod
     async def unbind_character_external_id(cls, character_id: int, external_type: ExternalType):
-        query = cls.t.c.delete().where(and_(cls.t.c.character_id == character_id, cls.t.c.type == int(external_type)))
+        query = cls.t.delete().where(and_(cls.t.c.character_id == character_id, cls.t.c.type == int(external_type)))
         await table.execute(query)

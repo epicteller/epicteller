@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from dataclasses import dataclass
 from typing import Optional
+
+from pydantic import BaseModel
 
 from epicteller.core.util.enum import EpisodeState
 
 
-@dataclass
-class Episode:
+class Episode(BaseModel):
     id: int
     url_token: str
     room_id: int

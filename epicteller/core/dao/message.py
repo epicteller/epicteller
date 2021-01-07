@@ -20,11 +20,11 @@ def _format_message(result) -> Optional[Message]:
         return None
     message_type = MessageType(result.type)
     if message_type == MessageType.TEXT:
-        content = TextMessageContent(**result.content)
+        content = TextMessageContent.parse_obj(result.content)
     elif message_type == MessageType.IMAGE:
-        content = ImageMessageContent(**result.content)
+        content = ImageMessageContent.parse_obj(result.content)
     elif message_type == MessageType.DICE:
-        content = DiceMessageContent(**result.content)
+        content = DiceMessageContent.parse_obj(result.content)
     else:
         content = MessageContent()
     message = Message(

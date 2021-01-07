@@ -2,13 +2,13 @@
 # -*- coding: utf-8 -*-
 from dataclasses import dataclass
 
+from pydantic import BaseModel
 
-@dataclass
-class Character:
+
+class Character(BaseModel):
     id: int
     url_token: str
     member_id: int
-    campaign_id: int
     name: str
     avatar: str
     description: str

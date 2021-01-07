@@ -27,12 +27,12 @@ async def batch_get_campaign(campaign_ids: Iterable[int]=None, *,
 
 
 async def active_campaign(campaign: Campaign):
-    await CampaignDAO.update_campaign(campaign.id, state=CampaignState.ACTIVE)
+    await CampaignDAO.update_campaign(campaign.id, state=int(CampaignState.ACTIVE))
     await RoomDAO.update_room(campaign.room_id, current_campaign_id=campaign.id)
 
 
 async def archive_campaign(campaign: Campaign):
-    await CampaignDAO.update_campaign(campaign.id, state=CampaignState.ARCHIVED)
+    await CampaignDAO.update_campaign(campaign.id, state=int(CampaignState.ARCHIVED))
     await RoomDAO.update_room(campaign.room_id, current_campaign_id=0)
 
 

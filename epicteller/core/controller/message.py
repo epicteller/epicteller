@@ -40,7 +40,7 @@ async def get_episode_messages(episode_id: int, *,
 
 async def create_message(episode: Episode, character: Optional[Character], message_type: MessageType,
                          content: MessageContent, is_gm: bool=False) -> Message:
-    content_data = asdict(content)
+    content_data: dict = content.dict()
     if is_gm:
         character_id = 0
     else:
