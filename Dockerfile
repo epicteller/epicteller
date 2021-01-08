@@ -11,10 +11,10 @@ ENV PYTHONPATH "${PYTHONPATH}:."
 FROM base AS production-base
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends gcc libc6-dev  \
+    && apt-get install -y --no-install-recommends build-essential gcc libc6-dev  \
     && rm -rf /var/lib/apt/lists/* \
     && pipenv install \
-    && apt-get purge -y --auto-remove gcc libc6-dev
+    && apt-get purge -y --auto-remove build-essential gcc libc6-dev
 
 # ================================= PRODUCTION =================================
 FROM production-base AS production

@@ -8,7 +8,7 @@ import nonebot
 from epicteller.bot import bus
 
 
-@bus.on('call_action')
+@bus.on('msg.bot.call_action')
 async def call_action(topic: str, data: str) -> None:
     data = json.loads(data)
     if 'params' not in data or 'self_id' not in data['params']:
