@@ -27,7 +27,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: true
-          tags: epicteller/epicteller:latest
+          tags: ${{ secrets.IMAGE_TAG }}
       -
         name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
