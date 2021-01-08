@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+from typing import Type
+
 from nonebot import Bot
-from nonebot.typing import Matcher, Event
+from nonebot.adapters.cqhttp.event import Event, GroupMessageEvent, MessageEvent
+from nonebot.matcher import Matcher
 
 from epicteller.core.controller import campaign as campaign_ctl
 from epicteller.core.controller import character as character_ctl
@@ -12,12 +15,13 @@ from epicteller.core.tables import table
 from epicteller.core.util.enum import ExternalType
 
 
-async def prepare_context(matcher: Matcher, bot: Bot, event: Event, state: dict) -> bool:
-    if event.detail_type != 'group' or event.raw_event['anonymous']:
+async def prepare_context(matcher: Type[Matcher], bot: Bot, event: MessageEvent, state: dict) -> bool:
+    if event.get_event_name() != 'message.group.normal':
         return False
+    assert isinstance(event, GroupMessageEvent)
     room_external_id = str(event.group_id)
     member_external_id = str(event.user_id)
-    name = event.sender['card'] or event.sender['nickname']
+    name = event.sender.card or event.sender.nickname
 
     room = await room_ctl.get_room_by_external(ExternalType.QQ, room_external_id)
     if not room:

@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+from typing import Type
+
 from nonebot import on_command, Bot
 from nonebot.adapters.cqhttp import Message
-from nonebot.typing import Matcher, Event
+from nonebot.adapters.cqhttp.event import Event, MessageEvent, GroupMessageEvent
+from nonebot.matcher import Matcher
 
 from epicteller.core import error
 from epicteller.core.controller import campaign as campaign_ctl
@@ -19,7 +22,7 @@ start = on_command('start')
 
 
 @start.handle()
-async def _(bot: Bot, event: Event, state: dict):
+async def _(bot: Bot, event: MessageEvent, state: dict):
     await must_prepare_context(start, bot, event, state)
     room: Room = state.get('room')
     campaign: Campaign = state.get('campaign')
@@ -47,7 +50,7 @@ end = on_command('end')
 
 
 @end.handle()
-async def _(bot: Bot, event: Event, state: dict):
+async def _(bot: Bot, event: MessageEvent, state: dict):
     await must_prepare_context(end, bot, event, state)
     room: Room = state.get('room')
     episode = await episode_ctl.get_room_running_episode(room)
@@ -75,7 +78,7 @@ async def extract_title(message: Message):
 
 
 @end.receive()
-async def process_title(bot: Bot, event: Event, state: dict):
+async def process_title(bot: Bot, event: MessageEvent, state: dict):
     episode: Episode = state.get('episode')
     possible_title = await extract_title(event.message)
     if not possible_title:
@@ -91,7 +94,7 @@ pause = on_command('pause', aliases={'save'})
 
 
 @pause.handle()
-async def _(bot: Bot, event: Event, state: dict):
+async def _(bot: Bot, event: MessageEvent, state: dict):
     await must_prepare_context(pause, bot, event, state)
     room: Room = state.get('room')
     campaign: Campaign = state.get('campaign')
@@ -102,10 +105,11 @@ async def _(bot: Bot, event: Event, state: dict):
     await pause.send('—— 💾 保存进度 💾 ——')
 
 
-async def must_prepare_context(matcher: Matcher, bot: Bot, event: Event, state: dict):
-    if event.detail_type != 'group':
+async def must_prepare_context(matcher: Type[Matcher], bot: Bot, event: MessageEvent, state: dict):
+    if event.message_type != 'group':
         await matcher.finish('🚫 这个指令只能在群聊中使用。')
-    if 'anonymous' in event.raw_event and event.raw_event['anonymous']:
+    assert isinstance(event, GroupMessageEvent)
+    if event.get_event_name() == 'message.group.anonymous':
         await matcher.finish('🚫 这个指令不能在匿名状态下使用。')
     room_external_id = str(event.group_id)
     member_external_id = str(event.user_id)

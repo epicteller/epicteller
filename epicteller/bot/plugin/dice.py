@@ -2,14 +2,14 @@
 # -*- coding: utf-8 -*-
 from typing import Iterable, Optional
 
-from nonebot.adapters.cqhttp import MessageSegment
+from nonebot.adapters.cqhttp import MessageSegment, permission, Message
+from nonebot.adapters.cqhttp.event import Event, MessageEvent, GroupMessageEvent
 from datum import error as datum_error
 from datum.base import Result
 from lark import LarkError, UnexpectedCharacters, UnexpectedToken
-from nonebot import on_message, on_command, permission
+from nonebot import on_message, on_command
 from nonebot.adapters.cqhttp import Bot
 from nonebot.rule import regex
-from nonebot.typing import Event
 
 from epicteller.bot.controller import base
 from epicteller.core.config import Config
@@ -25,7 +25,7 @@ dice = on_message(rule=regex(r'^[#:：]|^(\.r)'))
 
 
 @dice.handle()
-async def _(bot: Bot, event: Event, state: dict):
+async def _(bot: Bot, event: MessageEvent, state: dict):
     await prepare(bot, event, state)
     is_prepared = await base.prepare_context(dice, bot, event, state)
     result, reason = await must_get_dice_result(bot, event, state)
@@ -44,7 +44,7 @@ async def _(bot: Bot, event: Event, state: dict):
         msg += f" {value} 点。\n"
     msg += f"展开算式：\n{result}"
 
-    await dice.send(msg)
+    await dice.send(Message(msg))
     if not is_prepared:
         await dice.finish()
     episode: Episode = state.get('episode')
@@ -60,9 +60,10 @@ async def _(bot: Bot, event: Event, state: dict):
     await message_ctl.create_message(episode, character, MessageType.DICE, content, is_gm)
 
 
-async def prepare(bot: Bot, event: Event, state: dict):
-    if 'anonymous' in event.raw_event and event.raw_event['anonymous']:
-        await dice.finish((f"化身为「{event.raw_event['anonymous']['name']}」的无名鼠辈啊……"
+async def prepare(bot: Bot, event: MessageEvent, state: dict):
+    if event.get_event_name() == 'message.group.anonymous':
+        assert isinstance(event, GroupMessageEvent)
+        await dice.finish((f"化身为「{event.anonymous.name}」的无名鼠辈啊……"
                            f"若要掷出决定命运之骰的话，不如先光明正大地亮出自己的身份如何？"))
     arg = event.raw_message[len(state['_matched']):].strip().strip()
     if not arg:
@@ -73,7 +74,7 @@ async def prepare(bot: Bot, event: Event, state: dict):
         state['reason'] = args[1]
 
 
-async def must_get_dice_result(bot: Bot, event: Event, state: dict) -> (Result, Optional[str]):
+async def must_get_dice_result(bot: Bot, event: MessageEvent, state: dict) -> (Result, Optional[str]):
     result: Optional[Result] = None
     reason: Optional[str] = state.get('reason')
     errmsg: Optional[str] = None
@@ -116,7 +117,7 @@ async def must_get_dice_result(bot: Bot, event: Event, state: dict) -> (Result, 
                       f"……不、不如 {MessageSegment.at(user_id)} 试着重投一下？")
             # TODO: 上报到 Sentry
         if errmsg:
-            await dice.finish(errmsg)
+            await dice.finish(Message(errmsg))
         break
     if reason:
         reason = reason.strip()
@@ -129,7 +130,7 @@ refresh = on_command('refresh', permission=permission.PRIVATE_FRIEND)
 
 
 @refresh.handle()
-async def _(bot: Bot, event: Event, state: dict):
+async def _(bot: Bot, event: MessageEvent, state: dict):
     seed = event.raw_message.encode('utf8')
     if not seed:
         seed = None
