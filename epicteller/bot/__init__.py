@@ -1,12 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import asyncio
-import logging
-import re
 import threading
-from typing import Callable, List, Tuple, Pattern
-
-from nonebot.typing import Handler
 
 from epicteller.core.config import Config
 from epicteller.core.kafka import Bus

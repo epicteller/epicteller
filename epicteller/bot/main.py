@@ -1,15 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import asyncio
 
 import nonebot
+from nonebot.adapters.cqhttp import Bot as CQHTTPBot
 
 from epicteller.bot import start_bus
 from epicteller.core import redis
 
 
 def main():
-    nonebot.init(debug=True, command_start={'/', '!', "！"})
+    nonebot.init(command_start={'/', '!', "！"})
+    driver = nonebot.get_driver()
+    driver.register_adapter("cqhttp", CQHTTPBot)
+    nonebot.load_plugin('nonebot_plugin_sentry')
     nonebot.load_plugins('epicteller/bot/plugin')
     nonebot.get_driver().on_startup(redis.pool.init)
     nonebot.get_driver().on_startup(start_bus)

@@ -20,7 +20,7 @@ class Config:
     SEGMENT_API_KEY = os.environ.get('SEGMENT_API_KEY')
 
     # Sentry
-    SENTRY_API_KEY = os.environ.get('SENTRY_API_KEY')
+    SENTRY_DSN = os.environ.get('SENTRY_DSN')
 
     # MySQL
     MYSQL_URL = os.environ.get('EPICTELLER_MYSQL_URL')

@@ -1,20 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import sentry_sdk
 import uvicorn
-from fastapi import FastAPI
+from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 
-from epicteller.core import redis
-from epicteller.web.handler import auth, member
-
-app = FastAPI()
+from epicteller.web.app import app as asgi_app
 
 
-@app.on_event('startup')
-async def startup():
-    await redis.pool.init()
-
-app.include_router(member.router)
-app.include_router(auth.router, prefix='/auth')
+sentry_sdk.init()
+app = SentryAsgiMiddleware(asgi_app)
 
 if __name__ == '__main__':
     uvicorn.run('epicteller.web.main:app', host='0.0.0.0')

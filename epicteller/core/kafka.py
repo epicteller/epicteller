@@ -4,10 +4,12 @@ import asyncio
 import functools
 import time
 from collections import defaultdict
-from typing import List, Callable, Union
+from typing import List, Callable, Union, Awaitable
 
-from aiokafka import AIOKafkaConsumer
+import sentry_sdk
+from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
 
+from epicteller.core.log import logger
 from epicteller.core.util.load_module import load_modules
 
 
@@ -26,6 +28,7 @@ class Bus:
         self.job_paths = job_paths
         self._subscribers = defaultdict(set)
         self.consumer = None
+        self.producer = None
 
     def attach(self, topic: str, subscriber: Callable) -> None:
         self._subscribers[topic].add(subscriber)
@@ -43,9 +46,17 @@ class Bus:
     def topics(self) -> List[str]:
         return list(self._subscribers.keys())
 
-    def send(self, topic: str, data: str) -> None:
+    @staticmethod
+    async def _execute(subscriber: Callable[[str, str], Awaitable], topic: str, data: str):
+        try:
+            await subscriber(topic, data)
+        except Exception as e:
+            logger.error(f"Bot actor error when running topic [{topic}]: {e}")
+            sentry_sdk.capture_exception(e)
+
+    def dispatch(self, topic: str, data: str) -> None:
         for subscriber in self._subscribers[topic]:
-            asyncio.create_task(subscriber(topic, data))
+            asyncio.create_task(self._execute(subscriber, topic, data))
 
     def on(self, topics: List[str]):
         """
@@ -83,7 +94,16 @@ class Bus:
             async for msg in self.consumer:
                 print(
                     f'received: {msg.topic}, {msg.offset}, {msg.key}, {msg.value}, {time.time() - msg.timestamp / 1000}')
-                self.send(msg.topic, msg.value)
+                self.dispatch(msg.topic, msg.value)
         finally:
             # Will leave consumer group; perform autocommit if enabled.
             await self.consumer.stop()
+
+    async def send(self, topic: str, data: str):
+        if not self.producer:
+            self.producer = AIOKafkaProducer(loop=self.loop,
+                                             bootstrap_servers=self.bootstrap_servers,
+                                             *self.init_args,
+                                             **self.init_kwargs)
+            await self.producer.start()
+        await self.producer.send_and_wait(topic, data.encode('utf8'))
