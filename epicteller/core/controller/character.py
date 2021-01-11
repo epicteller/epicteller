@@ -33,6 +33,11 @@ async def get_character_by_campaign_name(campaign: Campaign, name: str) -> Optio
     return await get_character(character_id)
 
 
+async def get_character_external_id(character_id: int, external_type: ExternalType) -> Optional[str]:
+    externals = await CharacterExternalDAO.get_external_ids_by_character(character_id)
+    return externals.get(external_type)
+
+
 async def check_character_external(character: Character, external_type: ExternalType, external_id: str) -> bool:
     external_map = await CharacterExternalDAO.get_external_ids_by_character(character.id)
     if external_type not in external_map:

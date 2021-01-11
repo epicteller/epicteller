@@ -78,8 +78,10 @@ CREATE TABLE IF NOT EXISTS `room_external_id`
     `room_id`     BIGINT(20) UNSIGNED NOT NULL,
     `type`        TINYINT(4)          NOT NULL,
     `external_id` VARCHAR(200)        NOT NULL,
+    `bot_id`      VARCHAR(200)        NOT NULL,
     PRIMARY KEY (`id`),
     KEY `idx_room` (`room_id`),
+    KEY `idx_bot` (`type`, `bot_id`),
     UNIQUE KEY `unq_room_type` (`room_id`, `type`),
     UNIQUE KEY `unq_type_external` (`type`, `external_id`)
 ) ENGINE = InnoDB
@@ -206,7 +208,7 @@ CREATE TABLE IF NOT EXISTS `message`
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4;
 
-CREATE TABLE IF NOT EXISTS `combat_meta`
+CREATE TABLE IF NOT EXISTS `combat`
 (
     `id`         BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
     `url_token`  VARCHAR(200)        NOT NULL,
@@ -217,7 +219,7 @@ CREATE TABLE IF NOT EXISTS `combat_meta`
     `order`      JSON                NOT NULL,
     `data`       JSON                NOT NULL,
     `started_at` BIGINT(20) UNSIGNED NOT NULL,
-    `ended_at`   BIGINT(20) UNSIGNED NOT NULL,
+    `ended_at`   BIGINT(20) UNSIGNED          DEFAULT NULL,
     `created`    BIGINT(20) UNSIGNED NOT NULL,
     `updated`    BIGINT(20) UNSIGNED NOT NULL,
     PRIMARY KEY (`id`),

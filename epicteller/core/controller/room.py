@@ -3,7 +3,7 @@
 from typing import Optional, Iterable, Dict, Union
 
 from epicteller.core.dao.room import RoomDAO, RoomExternalDAO
-from epicteller.core.model.room import Room
+from epicteller.core.model.room import Room, RoomExternalInfo
 from epicteller.core.util.enum import ExternalType
 
 
@@ -32,12 +32,13 @@ async def get_room_by_external(external_type: ExternalType, external_id: str) ->
     return await get_room(room_id)
 
 
-async def get_room_externals(room_id: int) -> Dict[ExternalType, str]:
-    return await RoomExternalDAO.get_external_ids_by_room(room_id)
+async def get_room_external_info(room_id: int, external_type: ExternalType) -> Optional[RoomExternalInfo]:
+    info_map = await RoomExternalDAO.get_external_infos_by_room(room_id)
+    return info_map.get(external_type)
 
 
-async def bind_room_external(room_id: int, external_type: ExternalType, external_id: str):
-    await RoomExternalDAO.bind_room_external_id(room_id, external_type, external_id)
+async def bind_room_external(room_id: int, external_type: ExternalType, external_id: str, bot_id: str):
+    await RoomExternalDAO.bind_room_external_id(room_id, external_type, external_id, bot_id)
 
 
 async def unbind_room_external(room_id: int, external_type: ExternalType):

@@ -6,7 +6,7 @@ from typing import List, Optional, Iterable, Dict
 import base62
 from sqlalchemy import select, and_
 
-from epicteller.core.model.room import Room
+from epicteller.core.model.room import Room, RoomExternalInfo
 from epicteller.core.tables import table
 from epicteller.core.util import ObjectDict
 from epicteller.core.util.enum import ExternalType
@@ -74,7 +74,7 @@ class RoomDAO:
         await table.execute(query)
 
     @classmethod
-    async def create_room(cls, name: str, description: str, owner_id: int, avatar: str='') -> Room:
+    async def create_room(cls, name: str, description: str, owner_id: int, avatar: str = '') -> Room:
         created = int(time.time())
         url_token = base62.encode(get_id())
         values = ObjectDict(
@@ -99,7 +99,7 @@ class RoomMemberDAO:
     t = table.room_member
 
     @classmethod
-    async def get_member_ids_by_room(cls, room_id: int, offset: int=0, limit: int=20) -> List[int]:
+    async def get_member_ids_by_room(cls, room_id: int, offset: int = 0, limit: int = 20) -> List[int]:
         query = select([cls.t.c.member_id]).where(cls.t.c.room_id == room_id).offset(offset).limit(limit)
         result = await table.execute(query)
         rows = await result.fetchall()
@@ -107,7 +107,7 @@ class RoomMemberDAO:
         return member_ids
 
     @classmethod
-    async def get_room_ids_by_member(cls, member_id: int, offset: int=0, limit: int=20) -> List[int]:
+    async def get_room_ids_by_member(cls, member_id: int, offset: int = 0, limit: int = 20) -> List[int]:
         query = select([cls.t.c.room_id]).where(cls.t.c.member_id == member_id).offset(offset).limit(limit)
         result = await table.execute(query)
         rows = await result.fetchall()
@@ -170,22 +170,28 @@ class RoomExternalDAO:
         return room_id
 
     @classmethod
-    async def get_external_ids_by_room(cls, room_id: int) -> Dict[ExternalType, str]:
+    async def get_external_infos_by_room(cls, room_id: int) -> Dict[ExternalType, RoomExternalInfo]:
         query = select([
             cls.t.c.type,
             cls.t.c.external_id,
+            cls.t.c.bot_id,
         ]).where(cls.t.c.room_id == room_id)
         result = await table.execute(query)
         rows = await result.fetchall()
-        externals = {ExternalType(row.type): row.external_id for row in rows}
+        externals = {ExternalType(row.type): RoomExternalInfo(room_id=room_id,
+                                                              type=ExternalType(row.type),
+                                                              external_id=row.external_id,
+                                                              bot_id=row.bot_id) for row in rows}
         return externals
 
     @classmethod
-    async def bind_room_external_id(cls, room_id: int, external_type: ExternalType, external_id: str) -> None:
+    async def bind_room_external_id(cls, room_id: int, external_type: ExternalType, external_id: str,
+                                    bot_id: str) -> None:
         query = cls.t.insert().values(
             room_id=room_id,
             type=int(external_type),
             external_id=external_id,
+            bot_id=bot_id,
         )
         await table.execute(query)
 
