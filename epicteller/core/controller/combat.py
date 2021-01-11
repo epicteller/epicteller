@@ -49,6 +49,8 @@ async def start_new_combat(room: Room) -> Combat:
 
 
 async def end_combat(combat: Combat):
+    if not combat or combat.state == CombatState.ENDED:
+        raise error.combat.CombatEndedError()
     running_combat_id = await RoomRunningCombatDAO.get_running_combat_id(combat.room_id)
     async with table.db.begin():
         await CombatDAO.update_combat(combat.id,
@@ -60,10 +62,10 @@ async def end_combat(combat: Combat):
 
 
 async def run_combat(combat: Combat):
-    if combat.state == CombatState.RUNNING:
-        raise error.combat.CombatRunningError()
-    elif combat.state == CombatState.ENDED:
+    if not combat or combat.state == CombatState.ENDED:
         raise error.combat.CombatEndedError()
+    elif combat.state == CombatState.RUNNING:
+        raise error.combat.CombatRunningError()
     if not combat.order.order_list:
         raise error.combat.CombatOrderEmptyError()
     combat.order.current_token_name = combat.order.order_list[0]
@@ -73,7 +75,7 @@ async def run_combat(combat: Combat):
 
 
 async def next_combat_token(combat: Combat) -> Tuple[int, CombatToken]:
-    if combat.state != CombatState.RUNNING:
+    if not combat or combat.state != CombatState.RUNNING:
         raise error.combat.CombatNotRunningError()
     order_list = combat.order.order_list
     if not order_list:
