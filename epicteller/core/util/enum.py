@@ -18,7 +18,9 @@ class EpisodeState(IntEnum):
 
 
 class CombatState(IntEnum):
-    START = 0
+    INITIATING = 0
+    RUNNING = 1
+    ENDED = 2
 
 
 class DiceType(IntEnum):

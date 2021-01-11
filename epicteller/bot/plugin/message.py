@@ -41,7 +41,7 @@ async def prepare(bot: Bot, event: MessageEvent, state: dict):
     is_prepared = await base.prepare_context(say, bot, event, state)
     if not is_prepared:
         await say.finish()
-    msg_text = event.get_plaintext().strip()
+    msg_text = event.get_plaintext().strip().replace('\r\n', '\n')
     msg_images = [i for i in event.message if i.type == 'image']
     if msg_text:
         message_type = MessageType.TEXT

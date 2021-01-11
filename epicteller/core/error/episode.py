@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+from epicteller.core.error.base import EpictellerError
 
 
-class EpisodeError(Exception):
+class EpisodeError(EpictellerError):
     pass
 
 

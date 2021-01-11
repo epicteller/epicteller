@@ -2,15 +2,19 @@
 # -*- coding: utf-8 -*-
 import asyncio
 import functools
-import time
+import json
 from collections import defaultdict
-from typing import List, Callable, Union, Awaitable
+from typing import List, Callable, Union, Awaitable, Optional
 
 import sentry_sdk
 from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
 
+from epicteller.core.config import Config
 from epicteller.core.log import logger
+from epicteller.core.model.kafka_msg.base import KafkaMsg
 from epicteller.core.util.load_module import load_modules
+
+_producer: Optional[AIOKafkaProducer] = None
 
 
 class Bus:
@@ -51,14 +55,14 @@ class Bus:
         try:
             await subscriber(topic, data)
         except Exception as e:
-            logger.error(f"Bot actor error when running topic [{topic}]: {e}")
+            logger.error(f"Error occurred when running topic [{topic}]: {e}")
             sentry_sdk.capture_exception(e)
 
     def dispatch(self, topic: str, data: str) -> None:
         for subscriber in self._subscribers[topic]:
             asyncio.create_task(self._execute(subscriber, topic, data))
 
-    def on(self, topics: List[str]):
+    def on(self, topics: Union[List[str], str]):
         """
         根据函数构建订阅者，并注册到对应的 topic 下
         """
@@ -92,18 +96,20 @@ class Bus:
         try:
             # Consume messages
             async for msg in self.consumer:
-                print(
-                    f'received: {msg.topic}, {msg.offset}, {msg.key}, {msg.value}, {time.time() - msg.timestamp / 1000}')
+                logger.debug('Kafka bus received topic:', msg.topic)
                 self.dispatch(msg.topic, msg.value)
         finally:
             # Will leave consumer group; perform autocommit if enabled.
             await self.consumer.stop()
 
-    async def send(self, topic: str, data: str):
-        if not self.producer:
-            self.producer = AIOKafkaProducer(loop=self.loop,
-                                             bootstrap_servers=self.bootstrap_servers,
-                                             *self.init_args,
-                                             **self.init_kwargs)
-            await self.producer.start()
-        await self.producer.send_and_wait(topic, data.encode('utf8'))
+
+async def publish(msg: KafkaMsg):
+    try:
+        global _producer
+        if not _producer:
+            _producer = AIOKafkaProducer(loop=asyncio.get_event_loop(),
+                                         bootstrap_servers=Config.KAFKA_SERVERS)
+            await _producer.start()
+        await _producer.send(msg.action, msg.json().encode('utf8'))
+    except Exception as e:
+        logger.error(f'Error occurred when publishing kafka message[{msg.action}]:', e)

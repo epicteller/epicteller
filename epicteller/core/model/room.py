@@ -4,6 +4,8 @@ from typing import Optional
 
 from pydantic import BaseModel
 
+from epicteller.core.util.enum import ExternalType
+
 
 class Room(BaseModel):
     id: int
@@ -15,3 +17,10 @@ class Room(BaseModel):
     avatar: str
     created: int
     updated: int
+
+
+class RoomExternalInfo(BaseModel):
+    room_id: int
+    type: ExternalType
+    external_id: str
+    bot_id: str
