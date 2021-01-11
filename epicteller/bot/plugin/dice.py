@@ -12,14 +12,18 @@ from nonebot.adapters.cqhttp import Bot
 from nonebot.rule import regex
 
 from epicteller.bot.controller import base
+from epicteller.core import error
 from epicteller.core.config import Config
+from epicteller.core.controller import combat as combat_ctl
 from epicteller.core.controller import dice as dice_ctl
 from epicteller.core.controller import message as message_ctl
 from epicteller.core.model.character import Character
+from epicteller.core.model.combat import CombatToken
 from epicteller.core.model.episode import Episode
 from epicteller.core.model.message import DiceMessageContent
-from epicteller.core.util.enum import DiceType, MessageType
-
+from epicteller.core.model.room import Room
+from epicteller.core.util.enum import DiceType, MessageType, CombatState
+from epicteller.core.util.typing import Number_T
 
 dice = on_message(rule=regex(r'^[#:：]|^(\.r)'))
 
@@ -49,7 +53,7 @@ async def _(bot: Bot, event: MessageEvent, state: dict):
         await dice.finish()
     episode: Episode = state.get('episode')
     character: Character = state.get('character')
-    is_gm: bool = state.get('is_gm')
+    is_gm: bool = state.get('is_gm', False)
     content = DiceMessageContent(
         dice_type=dice_type,
         reason=reason or None,
@@ -58,6 +62,25 @@ async def _(bot: Bot, event: MessageEvent, state: dict):
         value=value,
     )
     await message_ctl.create_message(episode, character, MessageType.DICE, content, is_gm)
+
+    # 先攻部分
+    if not isinstance(value, Number_T):
+        return
+    room: Room = state['room']
+    combat = await combat_ctl.get_room_running_combat(room)
+    if not combat or combat.state != CombatState.INITIATING:
+        return
+    if is_gm and not reason:
+        return
+    token_name = reason or character.name
+    token = CombatToken(name=token_name, initiative=float(value))
+    if character:
+        token.character_id = character.id
+    try:
+        await combat_ctl.add_combat_token(combat, token)
+    except error.combat.CombatTokenAlreadyExistsError:
+        await dice.finish(f'「{token_name}」已存在于先攻列表，无法再次追加。')
+        return
 
 
 async def prepare(bot: Bot, event: MessageEvent, state: dict):
