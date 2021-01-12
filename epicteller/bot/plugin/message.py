@@ -25,6 +25,7 @@ say = on_message(rule=regex(r'^[^()（）]'), priority=99999)
 
 @say.handle()
 async def _(bot: Bot, event: MessageEvent, state: dict):
+    print(event.raw_message)
     await prepare(bot, event, state)
     episode: Episode = state.get('episode')
     character: Character = state.get('character')

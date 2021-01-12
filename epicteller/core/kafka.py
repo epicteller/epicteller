@@ -20,13 +20,11 @@ _producer: Optional[AIOKafkaProducer] = None
 class Bus:
 
     def __init__(self, bootstrap_servers: Union[str, List[str]],
-                 loop=asyncio.get_event_loop(),
                  job_paths: List[str] = None,
                  *args, **kwargs):
         if job_paths is None:
             job_paths = []
         self.bootstrap_servers = bootstrap_servers
-        self.loop = loop
         self.init_args = args
         self.init_kwargs = kwargs
         self.job_paths = job_paths
@@ -84,19 +82,17 @@ class Bus:
         for path in self.job_paths:
             load_modules(path, recursive=True)
         try:
-            self.consumer = AIOKafkaConsumer(loop=self.loop,
-                                             bootstrap_servers=self.bootstrap_servers,
+            self.consumer = AIOKafkaConsumer(bootstrap_servers=self.bootstrap_servers,
                                              *self.init_args,
                                              **self.init_kwargs)
             self.consumer.subscribe(self.topics)
             await self.consumer.start()
         except Exception:
-            self.loop.stop()
             raise
         try:
             # Consume messages
             async for msg in self.consumer:
-                logger.debug('Kafka bus received topic:', msg.topic)
+                logger.debug(f'Kafka bus received topic: {msg.topic}')
                 self.dispatch(msg.topic, msg.value)
         finally:
             # Will leave consumer group; perform autocommit if enabled.
@@ -110,6 +106,6 @@ async def publish(msg: KafkaMsg):
             _producer = AIOKafkaProducer(loop=asyncio.get_event_loop(),
                                          bootstrap_servers=Config.KAFKA_SERVERS)
             await _producer.start()
-        await _producer.send(msg.action, msg.json().encode('utf8'))
+        await _producer.send_and_wait(msg.action, msg.json().encode('utf8'))
     except Exception as e:
         logger.error(f'Error occurred when publishing kafka message[{msg.action}]:', e)

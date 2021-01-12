@@ -4,7 +4,7 @@
 import nonebot
 from nonebot.adapters.cqhttp import Bot as CQHTTPBot
 
-from epicteller.bot import start_bus
+from epicteller.bot import bus_init
 from epicteller.core import redis
 
 
@@ -15,7 +15,7 @@ def main():
     nonebot.load_plugin('nonebot_plugin_sentry')
     nonebot.load_plugins('epicteller/bot/plugin')
     nonebot.get_driver().on_startup(redis.pool.init)
-    nonebot.get_driver().on_startup(start_bus)
+    nonebot.get_driver().on_startup(bus_init)
 
     nonebot.run(host='0.0.0.0', port=10090)
 

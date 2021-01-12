@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+from dataclasses import dataclass
 from typing import Optional
 
 import nonebot
 from nonebot.adapters.cqhttp import Bot, MessageSegment
 from nonebot.adapters.cqhttp import Message
-from pydantic import BaseModel
 
 from epicteller.bot import bus
+from epicteller.bot.controller import combat as combat_bot_ctl
 from epicteller.core.controller import character as character_ctl
 from epicteller.core.controller import combat as combat_ctl
 from epicteller.core.controller import room as room_ctl
@@ -18,7 +19,8 @@ from epicteller.core.model.room import Room
 from epicteller.core.util.enum import ExternalType, CombatState
 
 
-class CombatContext(BaseModel):
+@dataclass
+class CombatContext:
     bot: Bot
     combat: Combat
     room: Room
@@ -59,15 +61,10 @@ async def combat_run(topic: str, data: str):
         return
     combat = context.combat
     token = combat.tokens[combat.order.current_token_name]
-    player_name = f'「{token.name}」'
-    if token.character_id:
-        character_external_id = await character_ctl.get_character_external_id(token.character_id,
-                                                                              ExternalType.QQ)
-        if character_external_id:
-            player_name = MessageSegment.at(character_external_id)
+    player_name = await combat_bot_ctl.format_token_message(token)
     message = Message(f'⚔️进入行动阶段。\n'
                       f'第 {combat.order.round_count} 回合开始，'
-                      f'进入 {player_name} 的行动轮。')
+                      f'进入{player_name}的行动轮。')
     await context.send(message)
 
 
@@ -91,13 +88,8 @@ async def combat_acting_token_change(topic: str, data: str):
         return
     round_start_msg = f'第 {context.combat.order.round_count} 回合开始，' if msg.is_next_round else ''
     token = combat.tokens[combat.order.current_token_name]
-    player_name = f'「{token.name}」'
-    if token.character_id:
-        character_external_id = await character_ctl.get_character_external_id(token.character_id,
-                                                                              ExternalType.QQ)
-        if character_external_id:
-            player_name = MessageSegment.at(character_external_id)
-    message = Message(f'{round_start_msg}进入 {player_name} 的行动轮。')
+    player_name = await combat_bot_ctl.format_token_message(token)
+    message = Message(f'{round_start_msg}进入{player_name}的行动轮。')
     await context.send(message)
 
 
@@ -123,12 +115,7 @@ async def add_combat_token(topic: str, data: str):
     if combat.state == CombatState.ENDED:
         return
     token = msg.token
-    player_name = f'「{token.name}」'
-    if token.character_id:
-        character_external_id = await character_ctl.get_character_external_id(token.character_id,
-                                                                              ExternalType.QQ)
-        if character_external_id:
-            player_name = MessageSegment.at(character_external_id)
+    player_name = await combat_bot_ctl.format_token_message(token)
     message = Message(f'{player_name} 已计入先攻顺位，目前位于第 {msg.index + 1} 位。')
     await context.send(message)
 
@@ -143,11 +130,6 @@ async def remove_combat_token(topic: str, data: str):
     if combat.state == CombatState.ENDED:
         return
     token = msg.token
-    player_name = f'「{token.name}」'
-    if token.character_id:
-        character_external_id = await character_ctl.get_character_external_id(token.character_id,
-                                                                              ExternalType.QQ)
-        if character_external_id:
-            player_name = MessageSegment.at(character_external_id)
+    player_name = await combat_bot_ctl.format_token_message(token)
     message = Message(f'{player_name} 的先攻顺位被移除。')
     await context.send(message)
