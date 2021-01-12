@@ -67,6 +67,8 @@ def get_presigned_url(filename: str, headers: dict, bucket: str=None) -> str:
 
 
 def get_full_url(token: str, size: str='hd', fmt: str='jpg') -> str:
+    if not token:
+        return ''
     return f"https://img.epicteller.com/{token}_{size}.{fmt}"
 
 

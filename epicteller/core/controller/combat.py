@@ -122,6 +122,8 @@ async def set_current_token(combat: Combat, token: CombatToken):
 async def reorder_tokens(combat: Combat, token_names: List[str]):
     if set(token_names) != set(combat.order.order_list):
         raise error.combat.CombatTokenChangedError()
+    if token_names == combat.order.order_list:
+        return
     last_order_list = combat.order.order_list.copy()
     combat.order.order_list = token_names
     await CombatDAO.update_combat(combat.id, order=combat.order.dict())
