@@ -23,7 +23,6 @@ from epicteller.core.model.episode import Episode
 from epicteller.core.model.message import DiceMessageContent
 from epicteller.core.model.room import Room
 from epicteller.core.util.enum import DiceType, MessageType, CombatState
-from epicteller.core.util.typing import Number_T
 
 dice = on_message(rule=regex(r'^[#:：]|^(\.r)'))
 
@@ -64,7 +63,7 @@ async def _(bot: Bot, event: MessageEvent, state: dict):
     await message_ctl.create_message(episode, character, MessageType.DICE, content, is_gm)
 
     # 先攻部分
-    if not isinstance(value, Number_T):
+    if not isinstance(value, int) and not isinstance(value, float):
         return
     room: Room = state['room']
     combat = await combat_ctl.get_room_running_combat(room)

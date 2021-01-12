@@ -1,4 +1,3 @@
-DROP DATABASE IF EXISTS test_epicteller;
 CREATE DATABASE IF NOT EXISTS test_epicteller;
 USE test_epicteller;
 

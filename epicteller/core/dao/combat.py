@@ -16,6 +16,7 @@ from epicteller.core.util.seq import get_id
 def _format_combat(result) -> Optional[Combat]:
     if not result:
         return
+
     combat = Combat(
         id=result.id,
         url_token=result.url_token,
@@ -26,7 +27,7 @@ def _format_combat(result) -> Optional[Combat]:
         order=CombatOrder.parse_obj(result.order),
         data=result.data,
         started_at=result.started_at,
-        ended_at=result.ended_at,
+        ended_at=getattr(result, 'ended_at', None),
         created=result.created,
         updated=result.updated,
     )
@@ -43,7 +44,7 @@ class CombatDAO:
         t.c.state,
         t.c.is_removed,
         t.c.tokens,
-        t.c.order_list,
+        t.c.order,
         t.c.data,
         t.c.started_at,
         t.c.ended_at,
