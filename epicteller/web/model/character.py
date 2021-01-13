@@ -7,6 +7,7 @@ from pydantic import BaseModel
 
 class Character(BaseModel):
     id: str
+    type: str = 'character'
     member: Optional[int]  # 暂时先不填充这个了
     name: str
     avatar: str

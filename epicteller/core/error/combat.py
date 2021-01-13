@@ -1,46 +1,46 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+from starlette.status import HTTP_404_NOT_FOUND
+
 from epicteller.core.error.base import EpictellerError
 
 
 class CombatError(EpictellerError):
-    pass
+    code = 10000
 
 
 class CombatNotFoundError(CombatError):
-    pass
+    status_code = HTTP_404_NOT_FOUND
+    code = 10001
 
 
 class CombatRunningError(CombatError):
-    pass
+    code = 10002
 
 
 class CombatNotRunningError(CombatError):
-    pass
+    code = 10003
 
 
 class CombatEndedError(CombatError):
-    pass
+    code = 10004
 
 
 class CombatOrderEmptyError(CombatError):
-    pass
+    code = 10005
 
 
 class CombatTokenChangedError(CombatError):
-    pass
+    code = 10006
 
 
 class CannotRemoveActingTokenError(CombatError):
-    def __init__(self, token_name: str):
-        self.token_name = token_name
+    code = 10007
 
 
 class CombatTokenAlreadyExistsError(CombatError):
-    def __init__(self, token_name: str):
-        self.token_name = token_name
+    code = 10008
 
 
 class CombatTokenNotFoundError(CombatError):
-    def __init__(self, token_name: str):
-        self.token_name = token_name
+    code = 10009

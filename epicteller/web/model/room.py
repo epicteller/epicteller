@@ -7,6 +7,7 @@ from pydantic import BaseModel
 
 class Room(BaseModel):
     id: str
+    type: str = 'room'
     name: str
     description: str
     is_removed: Optional[bool]

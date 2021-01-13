@@ -158,7 +158,7 @@ async def remove_combat_token(combat: Combat, token_name: str):
     if len(combat.order.order_list) <= 1:
         raise error.combat.CombatOrderEmptyError()
     if combat.order.current_token_name == token_name:
-        raise error.combat.CannotRemoveActingTokenError(token_name)
+        raise error.combat.CannotRemoveActingTokenError()
     token = combat.tokens[token_name].copy()
     del combat.tokens[token_name]
     combat.order.order_list.remove(token_name)

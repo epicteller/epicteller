@@ -3,7 +3,7 @@
 from fastapi import FastAPI
 
 from epicteller.core import redis
-from epicteller.web.handler import auth, member
+from epicteller.web.handler import auth, member, combat
 
 app = FastAPI()
 
@@ -12,5 +12,6 @@ app = FastAPI()
 async def startup():
     await redis.pool.init()
 
+app.include_router(combat.router, prefix='/combats')
 app.include_router(member.router)
 app.include_router(auth.router, prefix='/auth')

@@ -10,10 +10,10 @@ from epicteller.web.model.character import Character as WebCharacter
 async def fetch_character(character: CoreCharacter) -> Optional[WebCharacter]:
     if not character:
         return
-    return (await batch_fetch_characters({character.id: character})).get(character.url_token)
+    return (await batch_fetch_characters({character.id: character})).get(character.id)
 
 
-async def batch_fetch_characters(characters: Dict[int, CoreCharacter]) -> Dict[str, WebCharacter]:
+async def batch_fetch_characters(characters: Dict[int, CoreCharacter]) -> Dict[int, WebCharacter]:
     results = {}
     for cid, c in characters.items():
         if not c:
@@ -28,5 +28,5 @@ async def batch_fetch_characters(characters: Dict[int, CoreCharacter]) -> Dict[s
             created=c.created,
             updated=c.updated,
         )
-        results[result.id] = result
+        results[c.id] = result
     return results

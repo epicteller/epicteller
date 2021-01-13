@@ -1,20 +1,22 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+from starlette.status import HTTP_404_NOT_FOUND
+
 from epicteller.core.error.base import EpictellerError
 
 
 class EpisodeError(EpictellerError):
-    pass
+    code = 20000
 
 
 class EpisodeNotFoundError(EpisodeError):
-    pass
+    status_code = HTTP_404_NOT_FOUND
+    code = 20001
 
 
 class EpisodeRunningError(EpisodeError):
-    def __init__(self, episode_id: int):
-        self.episode_id = episode_id
+    code = 20002
 
 
 class EpisodeEndedError(EpisodeError):
-    pass
+    code = 20003

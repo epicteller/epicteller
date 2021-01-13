@@ -35,7 +35,7 @@ async def batch_get_episode(episode_ids: Iterable[int]=None, *,
 async def start_new_episode(room: Room, campaign: Campaign, title: str=const.DEFAULT_EPISODE_TITLE) -> Episode:
     running_episode_id = await RoomRunningEpisodeDAO.get_running_episode_id(room.id)
     if running_episode_id:
-        raise error.episode.EpisodeRunningError(running_episode_id)
+        raise error.episode.EpisodeRunningError()
     async with table.db.begin():
         episode = await EpisodeDAO.create_episode(room.id, campaign.id, title, state=EpisodeState.RUNNING)
         await RoomRunningEpisodeDAO.set_running_episode(room.id, episode.id)
@@ -47,11 +47,11 @@ async def resume_episode(episode: Episode):
     if episode.state == EpisodeState.ENDED:
         raise error.episode.EpisodeEndedError()
     elif episode.state == EpisodeState.RUNNING:
-        raise error.episode.EpisodeRunningError(episode.id)
+        raise error.episode.EpisodeRunningError()
 
     running_episode_id = await RoomRunningEpisodeDAO.get_running_episode_id(episode.room_id)
     if running_episode_id:
-        raise error.episode.EpisodeRunningError(running_episode_id)
+        raise error.episode.EpisodeRunningError()
     async with table.db.begin():
         await EpisodeDAO.update_episode(episode.id, state=int(EpisodeState.RUNNING))
         await RoomRunningEpisodeDAO.set_running_episode(episode.room_id, episode.id)

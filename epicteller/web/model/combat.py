@@ -22,6 +22,7 @@ class CombatOrder(BaseModel):
 
 class Combat(BaseModel):
     id: str
+    type: str = 'combat'
     room: Room
     state: str
     is_removed: bool
