@@ -19,7 +19,6 @@ from epicteller.core.util.enum import MessageType, ExternalType
 
 message_cache = LRU(10000)
 
-
 say = on_message(rule=regex(r'^[^()（）]'), priority=99999)
 
 

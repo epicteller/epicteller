@@ -24,6 +24,7 @@ async def batch_get_character(character_ids: Iterable[int]=None, *,
         return await CharacterDAO.batch_get_character_by_id(character_ids)
     elif url_tokens:
         return await CharacterDAO.batch_get_character_by_url_token(url_tokens)
+    return {}
 
 
 async def get_character_by_campaign_name(campaign: Campaign, name: str) -> Optional[Character]:
