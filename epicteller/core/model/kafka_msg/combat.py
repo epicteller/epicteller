@@ -26,6 +26,7 @@ class MsgCombatActingTokenChange(MsgCombat):
     action = 'epicteller.combat.acting_token_change'
     last_token_name: str
     current_token_name: str
+    rank: int
     round_count: int
     is_next_round: bool = False
 
@@ -39,7 +40,7 @@ class MsgCombatReorderToken(MsgCombat):
 class MsgAddCombatToken(MsgCombat):
     action = 'epicteller.combat.add_combat_token'
     token: CombatToken
-    index: int
+    rank: int
 
 
 class MsgRemoveCombatToken(MsgCombat):

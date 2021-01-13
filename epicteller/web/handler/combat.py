@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from typing import Optional
+from enum import Enum
+from typing import Optional, List
 
 from fastapi import APIRouter
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 
 from epicteller.core.controller import character as character_ctl
 from epicteller.core.controller import combat as combat_ctl
@@ -30,13 +31,49 @@ async def get_combat(url_token: str):
     return web_combat
 
 
+class UpdateCombatArgs(BaseModel):
+    class UpdateAction(Enum):
+        RUN = 'run'
+        END = 'end'
+        NEXT = 'next'
+        REORDER = 'reorder'
+    action: UpdateAction
+
+    tokens: Optional[List[str]]
+
+    @validator('tokens', always=True)
+    def must_have_reorder_tokens(cls, tokens: Optional[List[str]], values: dict):
+        if values['action'] == cls.UpdateAction.REORDER:
+            assert tokens
+        return tokens
+
+
+@router.put('/{url_token}', response_model=WebCombat, response_model_exclude_none=True)
+async def update_combat(url_token: str, args: UpdateCombatArgs):
+    combat = await must_prepare_combat(url_token)
+    if args.action == UpdateCombatArgs.UpdateAction.RUN:
+        await combat_ctl.run_combat(combat)
+    elif args.action == UpdateCombatArgs.UpdateAction.END:
+        await combat_ctl.end_combat(combat)
+    elif args.action == UpdateCombatArgs.UpdateAction.NEXT:
+        await combat_ctl.next_combat_token(combat)
+    elif args.action == UpdateCombatArgs.UpdateAction.REORDER:
+        await combat_ctl.reorder_tokens(combat, args.tokens)
+    return await combat_fetcher.fetch_combat(combat)
+
+
 class CombatTokenIn(BaseModel):
     name: str
     initiative: float = 0
     character_id: Optional[str]
 
 
-@router.post('/{url_token}/tokens', response_model=WebCombatToken, response_model_exclude_none=True)
+class CombatTokenOut(BaseModel):
+    token: WebCombatToken
+    rank: int
+
+
+@router.post('/{url_token}/tokens', response_model=CombatTokenOut, response_model_exclude_none=True)
 async def add_combat_token(url_token: str, token_in: CombatTokenIn):
     combat = await must_prepare_combat(url_token)
     character_id: Optional[int] = None
@@ -46,6 +83,16 @@ async def add_combat_token(url_token: str, token_in: CombatTokenIn):
             raise NotFoundError()
         character_id = character.id
     token = CombatToken(name=token_in.name, initiative=token_in.initiative, character_id=character_id)
-    await combat_ctl.add_combat_token(combat, token)
+    rank = await combat_ctl.add_combat_token(combat, token)
     web_token = await combat_fetcher.fetch_combat_token(token)
-    return web_token
+    return CombatTokenOut(
+        token=web_token,
+        rank=rank,
+    )
+
+
+@router.delete('/{url_token}/tokens/{token_name}')
+async def remove_combat_token(url_token: str, token_name: str):
+    combat = await must_prepare_combat(url_token)
+    await combat_ctl.remove_combat_token(combat, token_name)
+    return {'success': True}
