@@ -116,7 +116,7 @@ async def add_combat_token(topic: str, data: str):
         return
     token = msg.token
     player_name = await combat_bot_ctl.format_token_message(token)
-    message = Message(f'{player_name} 已计入先攻顺位，目前位于第 {msg.index + 1} 位。')
+    message = Message(f'{player_name} 已计入先攻顺位，目前位于第 {msg.rank + 1} 位。')
     await context.send(message)
 
 

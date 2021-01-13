@@ -90,11 +90,12 @@ async def next_combat_token(combat: Combat) -> Tuple[int, CombatToken]:
     is_next_round = False
     # 最后一个了，回合数 + 1
     if order_index == len(order_list) - 1:
+        rank = 0
         combat.order.round_count += 1
-        current_token_name = order_list[0]
         is_next_round = True
     else:
-        current_token_name = order_list[order_index + 1]
+        rank = order_index + 1
+    current_token_name = order_list[rank]
     combat.order.current_token_name = current_token_name
     await CombatDAO.update_combat(combat.id, order=combat.order.dict())
     await kafka.publish(combat_msg.MsgCombatActingTokenChange(
@@ -103,27 +104,31 @@ async def next_combat_token(combat: Combat) -> Tuple[int, CombatToken]:
         current_token_name=current_token_name,
         round_count=combat.order.round_count,
         is_next_round=is_next_round,
+        rank=rank,
     ))
+    return rank, combat.tokens[current_token_name]
 
 
 async def set_current_token(combat: Combat, token: CombatToken):
     assert token.name in combat.order.order_list and token.name in combat.tokens
     last_token_name = combat.order.current_token_name
     combat.order.current_token_name = token.name
+    rank = combat.order.order_list.index(token.name)
     await CombatDAO.update_combat(combat.id, order=combat.order.dict())
     await kafka.publish(combat_msg.MsgCombatActingTokenChange(
         combat_id=combat.id,
         last_token_name=last_token_name,
         current_token_name=token.name,
         round_count=combat.order.round_count,
+        rank=rank,
     ))
 
 
-async def reorder_tokens(combat: Combat, token_names: List[str]):
+async def reorder_tokens(combat: Combat, token_names: List[str]) -> Combat:
     if set(token_names) != set(combat.order.order_list):
         raise error.combat.CombatTokenChangedError()
     if token_names == combat.order.order_list:
-        return
+        return combat
     last_order_list = combat.order.order_list.copy()
     combat.order.order_list = token_names
     await CombatDAO.update_combat(combat.id, order=combat.order.dict())
@@ -132,9 +137,10 @@ async def reorder_tokens(combat: Combat, token_names: List[str]):
         last_order_list=last_order_list,
         current_order_list=token_names,
     ))
+    return combat
 
 
-async def add_combat_token(combat: Combat, token: CombatToken):
+async def add_combat_token(combat: Combat, token: CombatToken) -> int:
     if token.name in combat.tokens or token.name in combat.order.order_list:
         raise error.combat.CombatTokenAlreadyExistsError(token.name)
     combat.tokens[token.name] = token
@@ -142,7 +148,7 @@ async def add_combat_token(combat: Combat, token: CombatToken):
     # 先攻模式下，顺序强制按照先攻值降序排列
     if combat.state == CombatState.INITIATING:
         combat.order.order_list.sort(key=lambda name: combat.tokens[name].initiative, reverse=True)
-    index = combat.order.order_list.index(token.name)
+    rank = combat.order.order_list.index(token.name)
     # 确保 token map 和先攻顺序数据一致性
     assert set(combat.tokens.keys()) == set(combat.order.order_list)
     tokens = {name: token.dict() for name, token in combat.tokens.items()}
@@ -150,8 +156,9 @@ async def add_combat_token(combat: Combat, token: CombatToken):
     await kafka.publish(combat_msg.MsgAddCombatToken(
         combat_id=combat.id,
         token=token,
-        index=index,
+        rank=rank,
     ))
+    return rank
 
 
 async def remove_combat_token(combat: Combat, token_name: str):
