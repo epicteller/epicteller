@@ -108,18 +108,12 @@ async def reorder_token(topic: str, data: str):
         return
     if set(last_order) != set(current_order):
         return
-    changed_detail: List[Tuple[str, int, int]] = []
+    messages = []
     for token_name in current_order:
         last_rank = last_order.index(token_name)
         current_rank = current_order.index(token_name)
         if last_rank == current_rank:
             continue
-        changed_detail.append((token_name, last_rank, current_rank))
-    if not changed_detail:
-        return
-    messages = ['战斗的先攻顺序被变更。\n']
-    for detail in changed_detail:
-        token_name, last_rank, current_rank = detail
         token = combat.tokens[token_name]
         player_name = await combat_bot_ctl.format_token_message(token)
         if current_rank < last_rank:
@@ -128,8 +122,10 @@ async def reorder_token(topic: str, data: str):
             delta = f'后移 {current_rank - last_rank} 位'
         else:
             continue
-        messages.append(f' - {player_name}{delta}，目前处于第 {current_rank + 1} 位。\n')
-    await context.send(Message(messages))
+        messages.append(f'\n\t- {player_name}{delta}，目前处于第 {current_rank + 1} 位。')
+    if not messages:
+        return
+    await context.send(Message(['战斗的先攻顺序被变更。', *messages]))
 
 
 @bus.on('epicteller.combat.add_combat_token')
