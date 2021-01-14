@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, List, Tuple
 
 import nonebot
 from nonebot.adapters.cqhttp import Bot, MessageSegment
@@ -102,7 +102,34 @@ async def reorder_token(topic: str, data: str):
     combat = context.combat
     if combat.state == CombatState.ENDED:
         return
-    await context.send(Message('本场战斗的先攻顺序被变更。'))
+    last_order = msg.last_order_list
+    current_order = msg.current_order_list
+    if last_order == current_order:
+        return
+    if set(last_order) != set(current_order):
+        return
+    changed_detail: List[Tuple[str, int, int]] = []
+    for token_name in current_order:
+        last_rank = last_order.index(token_name)
+        current_rank = current_order.index(token_name)
+        if last_rank == current_rank:
+            continue
+        changed_detail.append((token_name, last_rank, current_rank))
+    if not changed_detail:
+        return
+    messages = ['战斗的先攻顺序被变更。\n']
+    for detail in changed_detail:
+        token_name, last_rank, current_rank = detail
+        token = combat.tokens[token_name]
+        player_name = await combat_bot_ctl.format_token_message(token)
+        if current_rank < last_rank:
+            delta = f'前移 {last_rank - current_rank} 位'
+        elif last_rank < current_rank:
+            delta = f'后移 {current_rank - last_rank} 位'
+        else:
+            continue
+        messages.append(f' - {player_name}{delta}，目前处于第 {current_rank + 1} 位。\n')
+    await context.send(Message(messages))
 
 
 @bus.on('epicteller.combat.add_combat_token')
