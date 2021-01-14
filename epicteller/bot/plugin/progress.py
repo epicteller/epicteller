@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import json
 from typing import Type
 
 from nonebot import on_command, Bot
-from nonebot.adapters.cqhttp import Message
+from nonebot.adapters.cqhttp import Message, MessageSegment, escape
 from nonebot.adapters.cqhttp.event import Event, MessageEvent, GroupMessageEvent
 from nonebot.matcher import Matcher
 
@@ -128,3 +129,16 @@ async def must_prepare_context(matcher: Type[Matcher], bot: Bot, event: MessageE
     state['room'] = room
     state['member'] = member
     state['campaign'] = campaign
+
+
+tmp = on_command('tmp')
+
+
+@tmp.handle()
+async def _(bot: Bot, event: MessageEvent, state: dict):
+    data = r'''<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="133" templateID="1" action="web" brief="[战斗] 正在战斗" sourceMsgId="0" url="https://ep-predict.epicteller.com" flag="0" adverSign="0" multiMsgFlag="0"><item layout="2"><picture cover="https://ep-predict.epicteller.com/icon512.png" w="0" h="0" /><title>先攻阶段</title><summary>当前角色：xxx</summary></item><source name="Epicteller" icon="http://i.gtimg.cn/vipstyle/nr/box/img/aio_icon_favorite.png" action="plugin" actionData="qqfav://operation/2" appid="-1" /></msg>'''
+    data = r'''
+<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="1" templateID="123" action="web" brief="&amp;amp;amp;amp;#91;QQ大程序&amp;amp;amp;amp;#93;b站XML" sourceMsgId="0" url="https://ep-predict.epicteller.com" flag="0" adverSign="0" multiMsgFlag="0"><item layout="2" advertiser_id="0" aid="0"><picture cover="https://ep-predict.epicteller.com/icon512.png" w="0" h="0" /><title>bilibilixml</title><summary>彩虹社比Hololive好114514倍</summary></item><source name="" icon="" action="" appid="-1" /></msg>
+    '''
+    message = Message(MessageSegment.xml(data=escape(data)))
+    await tmp.finish(message)
