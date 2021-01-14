@@ -4,7 +4,7 @@ import asyncio
 import functools
 import json
 from collections import defaultdict
-from typing import List, Callable, Union, Awaitable, Optional
+from typing import List, Callable, Union, Awaitable, Optional, Iterable
 
 import sentry_sdk
 from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
@@ -32,15 +32,21 @@ class Bus:
         self.consumer = None
         self.producer = None
 
-    def attach(self, topic: str, subscriber: Callable) -> None:
-        self._subscribers[topic].add(subscriber)
+    def attach(self, topics: Union[str, Iterable[str]], subscriber: Callable) -> None:
+        if not isinstance(topics, Iterable):
+            topics = [topics]
+        for topic in topics:
+            self._subscribers[topic].add(subscriber)
         if self.consumer:
             self.consumer.subscribe(self.topics)
 
-    def detach(self, topic: str, subscriber: Callable) -> None:
-        self._subscribers[topic].discard(subscriber)
-        if not self._subscribers[topic]:
-            del self._subscribers[topic]
+    def detach(self, topics: Union[str, Iterable[str]], subscriber: Callable) -> None:
+        if not isinstance(topics, Iterable):
+            topics = [topics]
+        for topic in topics:
+            self._subscribers[topic].discard(subscriber)
+            if not self._subscribers[topic]:
+                del self._subscribers[topic]
         if self.consumer:
             self.consumer.subscribe(self.topics)
 

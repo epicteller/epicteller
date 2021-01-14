@@ -3,6 +3,7 @@
 from typing import List
 
 from epicteller.core.model.combat import CombatToken
+from epicteller.core.model.kafka_msg import base
 from epicteller.core.model.kafka_msg.base import KafkaMsg
 
 
@@ -10,20 +11,23 @@ class MsgCombat(KafkaMsg):
     combat_id: int
 
 
+@base.action('epicteller.combat.create')
 class MsgCombatCreate(MsgCombat):
-    action = 'epicteller.combat.create'
+    pass
 
 
+@base.action('epicteller.combat.run')
 class MsgCombatRun(MsgCombat):
-    action = 'epicteller.combat.run'
+    pass
 
 
+@base.action('epicteller.combat.end')
 class MsgCombatEnd(MsgCombat):
-    action = 'epicteller.combat.end'
+    pass
 
 
+@base.action('epicteller.combat.acting_token_change')
 class MsgCombatActingTokenChange(MsgCombat):
-    action = 'epicteller.combat.acting_token_change'
     last_token_name: str
     current_token_name: str
     rank: int
@@ -31,18 +35,18 @@ class MsgCombatActingTokenChange(MsgCombat):
     is_next_round: bool = False
 
 
+@base.action('epicteller.combat.reorder_token')
 class MsgCombatReorderToken(MsgCombat):
-    action = 'epicteller.combat.reorder_token'
     last_order_list: List[str]
     current_order_list: List[str]
 
 
+@base.action('epicteller.combat.add_combat_token')
 class MsgAddCombatToken(MsgCombat):
-    action = 'epicteller.combat.add_combat_token'
     token: CombatToken
     rank: int
 
 
+@base.action('epicteller.combat.remove_combat_token')
 class MsgRemoveCombatToken(MsgCombat):
-    action = 'epicteller.combat.remove_combat_token'
     token: CombatToken
