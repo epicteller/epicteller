@@ -3,15 +3,16 @@
 from enum import Enum
 from typing import Optional, List
 
-from fastapi import APIRouter, WebSocket
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel, validator
 
 from epicteller.core.controller import character as character_ctl
 from epicteller.core.controller import combat as combat_ctl
 from epicteller.core.model.combat import Combat, CombatToken
-from epicteller.core.error.base import NotFoundError
+from epicteller.core.error.base import NotFoundError, EpictellerError
 from epicteller.core.model.kafka_msg.base import get_msg_model
 from epicteller.core.model.kafka_msg.combat import MsgCombat
+from epicteller.core.util.enum import CombatState
 from epicteller.web import bus
 from epicteller.web.fetcher import combat as combat_fetcher
 from epicteller.web.model.combat import Combat as WebCombat
@@ -41,7 +42,14 @@ class CombatLiveMsg(BaseModel):
 
 @router.websocket('/{url_token}')
 async def combat_live(websocket: WebSocket, url_token: str):
-    combat = await must_prepare_combat(url_token)
+    try:
+        combat = await must_prepare_combat(url_token)
+    except EpictellerError as e:
+        await websocket.close(e.code)
+        return
+    if combat.state == CombatState.ENDED:
+        await websocket.close(1000)
+        return
     await websocket.accept()
 
     topics = [
@@ -64,13 +72,17 @@ async def combat_live(websocket: WebSocket, url_token: str):
             combat=await combat_fetcher.fetch_combat(new_combat),
             action=msg,
         )
-        out_data = out_msg.dict(exclude={'action': {'combat_id'}}, skip_defaults=None)
+        out_data = out_msg.dict(exclude={'action': {'combat_id'}}, exclude_none=True)
         await websocket.send_json(out_data)
+        if msg.action == 'epicteller.combat.end':
+            await websocket.close(1000)
 
     try:
         bus.attach(topics, actor)
         while True:
-            _ = await websocket.receive()
+            _ = await websocket.receive_text()
+    except WebSocketDisconnect:
+        pass
     finally:
         bus.detach(topics, actor)
 
