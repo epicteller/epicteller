@@ -3,13 +3,16 @@
 from enum import Enum
 from typing import Optional, List
 
-from fastapi import APIRouter
+from fastapi import APIRouter, WebSocket
 from pydantic import BaseModel, validator
 
 from epicteller.core.controller import character as character_ctl
 from epicteller.core.controller import combat as combat_ctl
 from epicteller.core.model.combat import Combat, CombatToken
 from epicteller.core.error.base import NotFoundError
+from epicteller.core.model.kafka_msg.base import get_msg_model
+from epicteller.core.model.kafka_msg.combat import MsgCombat
+from epicteller.web import bus
 from epicteller.web.fetcher import combat as combat_fetcher
 from epicteller.web.model.combat import Combat as WebCombat
 from epicteller.web.model.combat import CombatToken as WebCombatToken
@@ -29,6 +32,47 @@ async def get_combat(url_token: str):
     combat = await must_prepare_combat(url_token=url_token)
     web_combat = await combat_fetcher.fetch_combat(combat)
     return web_combat
+
+
+class CombatLiveMsg(BaseModel):
+    combat: WebCombat
+    action: MsgCombat
+
+
+@router.websocket('/{url_token}')
+async def combat_live(websocket: WebSocket, url_token: str):
+    combat = await must_prepare_combat(url_token)
+    await websocket.accept()
+
+    topics = [
+        'epicteller.combat.run',
+        'epicteller.combat.end',
+        'epicteller.combat.acting_token_change',
+        'epicteller.combat.reorder_token',
+        'epicteller.combat.add_combat_token',
+        'epicteller.combat.remove_combat_token',
+    ]
+
+    async def actor(event: str, data: bytes):
+        model_cls = get_msg_model(event)
+        msg = model_cls.parse_raw(data)
+        assert isinstance(msg, MsgCombat)
+        if msg.combat_id != combat.id:
+            return
+        new_combat = await combat_ctl.get_combat(combat.id)
+        out_msg = CombatLiveMsg(
+            combat=await combat_fetcher.fetch_combat(new_combat),
+            action=msg,
+        )
+        out_data = out_msg.dict(exclude={'action': {'combat_id'}}, skip_defaults=None)
+        await websocket.send_json(out_data)
+
+    try:
+        bus.attach(topics, actor)
+        while True:
+            _ = await websocket.receive()
+    finally:
+        bus.detach(topics, actor)
 
 
 class UpdateCombatArgs(BaseModel):
