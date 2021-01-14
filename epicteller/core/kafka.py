@@ -38,7 +38,10 @@ class Bus:
         for topic in topics:
             self._subscribers[topic].add(subscriber)
         if self.consumer:
-            self.consumer.subscribe(self.topics)
+            if self.topics:
+                self.consumer.subscribe(self.topics)
+            else:
+                self.consumer.unsubscribe()
 
     def detach(self, topics: Union[str, Iterable[str]], subscriber: Callable) -> None:
         if isinstance(topics, str):
@@ -48,7 +51,10 @@ class Bus:
             if not self._subscribers[topic]:
                 del self._subscribers[topic]
         if self.consumer:
-            self.consumer.subscribe(self.topics)
+            if self.topics:
+                self.consumer.subscribe(self.topics)
+            else:
+                self.consumer.unsubscribe()
 
     @property
     def topics(self) -> List[str]:
@@ -91,7 +97,8 @@ class Bus:
             self.consumer = AIOKafkaConsumer(bootstrap_servers=self.bootstrap_servers,
                                              *self.init_args,
                                              **self.init_kwargs)
-            self.consumer.subscribe(self.topics)
+            if self.topics:
+                self.consumer.subscribe(self.topics)
             await self.consumer.start()
         except Exception:
             raise

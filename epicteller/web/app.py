@@ -11,8 +11,8 @@ app = FastAPI()
 
 @app.on_event('startup')
 async def startup():
+    bus_init()
     await redis.pool.init()
-    await bus_init()
 
 app.include_router(combat.router, prefix='/combats')
 app.include_router(member.router)

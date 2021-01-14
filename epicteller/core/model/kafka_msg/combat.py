@@ -11,23 +11,24 @@ class MsgCombat(KafkaMsg):
     combat_id: int
 
 
-@base.action('epicteller.combat.create')
+@base.action
 class MsgCombatCreate(MsgCombat):
-    pass
+    action = 'epicteller.combat.create'
 
 
-@base.action('epicteller.combat.run')
+@base.action
 class MsgCombatRun(MsgCombat):
-    pass
+    action = 'epicteller.combat.run'
 
 
-@base.action('epicteller.combat.end')
+@base.action
 class MsgCombatEnd(MsgCombat):
-    pass
+    action = 'epicteller.combat.end'
 
 
-@base.action('epicteller.combat.acting_token_change')
+@base.action
 class MsgCombatActingTokenChange(MsgCombat):
+    action = 'epicteller.combat.acting_token_change'
     last_token_name: str
     current_token_name: str
     rank: int
@@ -35,18 +36,21 @@ class MsgCombatActingTokenChange(MsgCombat):
     is_next_round: bool = False
 
 
-@base.action('epicteller.combat.reorder_token')
+@base.action
 class MsgCombatReorderToken(MsgCombat):
+    action = 'epicteller.combat.reorder_token'
     last_order_list: List[str]
     current_order_list: List[str]
 
 
-@base.action('epicteller.combat.add_combat_token')
+@base.action
 class MsgAddCombatToken(MsgCombat):
+    action = 'epicteller.combat.add_combat_token'
     token: CombatToken
     rank: int
 
 
-@base.action('epicteller.combat.remove_combat_token')
+@base.action
 class MsgRemoveCombatToken(MsgCombat):
+    action = 'epicteller.combat.remove_combat_token'
     token: CombatToken
