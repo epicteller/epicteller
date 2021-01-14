@@ -81,15 +81,24 @@ class UpdateCombatArgs(BaseModel):
         END = 'end'
         NEXT = 'next'
         REORDER = 'reorder'
+        SET_ACTING = 'set_acting'
     action: UpdateAction
 
     tokens: Optional[List[str]]
+
+    acting_token: Optional[str]
 
     @validator('tokens', always=True)
     def must_have_reorder_tokens(cls, tokens: Optional[List[str]], values: dict):
         if values['action'] == cls.UpdateAction.REORDER:
             assert tokens
         return tokens
+
+    @validator('acting_token', always=True)
+    def must_have_acting_token(cls, token: Optional[str], values: dict):
+        if values['action'] == cls.UpdateAction.SET_ACTING:
+            assert token
+        return token
 
 
 @router.put('/{url_token}', response_model=WebCombat, response_model_exclude_none=True)
@@ -103,6 +112,10 @@ async def update_combat(url_token: str, args: UpdateCombatArgs):
         await combat_ctl.next_combat_token(combat)
     elif args.action == UpdateCombatArgs.UpdateAction.REORDER:
         await combat_ctl.reorder_tokens(combat, args.tokens)
+    elif args.action == UpdateCombatArgs.UpdateAction.SET_ACTING:
+        if args.acting_token not in combat.tokens:
+            raise NotFoundError()
+        await combat_ctl.set_current_token(combat, combat.tokens[args.acting_token])
     return await combat_fetcher.fetch_combat(combat)
 
 
