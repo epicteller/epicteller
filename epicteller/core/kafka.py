@@ -33,7 +33,7 @@ class Bus:
         self.producer = None
 
     def attach(self, topics: Union[str, Iterable[str]], subscriber: Callable) -> None:
-        if not isinstance(topics, Iterable):
+        if isinstance(topics, str):
             topics = [topics]
         for topic in topics:
             self._subscribers[topic].add(subscriber)
@@ -41,7 +41,7 @@ class Bus:
             self.consumer.subscribe(self.topics)
 
     def detach(self, topics: Union[str, Iterable[str]], subscriber: Callable) -> None:
-        if not isinstance(topics, Iterable):
+        if isinstance(topics, str):
             topics = [topics]
         for topic in topics:
             self._subscribers[topic].discard(subscriber)
