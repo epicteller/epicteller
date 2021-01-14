@@ -111,6 +111,8 @@ async def next_combat_token(combat: Combat) -> Tuple[int, CombatToken]:
 
 async def set_current_token(combat: Combat, token: CombatToken):
     assert token.name in combat.order.order_list and token.name in combat.tokens
+    if token.name == combat.order.current_token_name:
+        return
     last_token_name = combat.order.current_token_name
     combat.order.current_token_name = token.name
     rank = combat.order.order_list.index(token.name)
