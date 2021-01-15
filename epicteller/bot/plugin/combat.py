@@ -66,10 +66,11 @@ async def combat_status(bot: Bot, event: MessageEvent, state: dict):
 async def combat_start(bot: Bot, event: MessageEvent, state: dict):
     room: Room = state['room']
     try:
-        await combat_ctl.start_new_combat(room)
+        combat = await combat_ctl.start_new_combat(room)
     except error.combat.CombatRunningError:
         await combat_cmd.finish('❌ 当前战斗还在进行中。')
         return
+    await combat_cmd.send(MessageSegment.share(f'https://www.epicteller.com/combat/{combat.url_token}'))
     await combat_cmd.finish(f'进入先攻阶段，战斗轮指示器已激活。\n'
                             f'投掷先攻骰来决定先攻顺序。\n'
                             f'- 在战斗的任意时刻，使用指令「{event.raw_message.strip()[0]}combat」检查战斗状态。\n'
