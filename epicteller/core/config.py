@@ -6,6 +6,8 @@ import random
 
 
 class Config:
+    DEBUG = bool(os.getenv('DEBUG'))
+
     APP_NAME = os.environ.get('APP_NAME') or 'epicteller'
 
     if os.environ.get('SECRET_KEY'):

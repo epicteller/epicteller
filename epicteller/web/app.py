@@ -4,10 +4,16 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from epicteller.core import redis
+from epicteller.core.config import Config
 from epicteller.web import bus_init
 from epicteller.web.handler import auth, member, combat
 
 app = FastAPI()
+
+
+allow_origins = ['*']
+if Config.DEBUG:
+    allow_origins.append("*")
 
 
 @app.on_event('startup')
@@ -20,8 +26,7 @@ app.include_router(member.router)
 app.include_router(auth.router, prefix='/auth')
 
 app.add_middleware(CORSMiddleware,
-                   allow_origins=["http://localhost",
-                                  "https://*.epicteller.com"],
+                   allow_origins=allow_origins,
                    allow_credentials=True,
                    allow_methods=["*"],
                    allow_headers=["*"])

@@ -64,7 +64,7 @@ async def combat_run(topic: str, data: str):
     player_name = await combat_bot_ctl.format_token_message(token)
     message = Message(f'⚔️进入行动阶段。\n'
                       f'第 {combat.order.round_count} 回合开始，'
-                      f'进入{player_name}的行动轮。')
+                      f'进入{player_name} 的行动轮。')
     await context.send(message)
 
 
@@ -89,7 +89,7 @@ async def combat_acting_token_change(topic: str, data: str):
     round_start_msg = f'第 {context.combat.order.round_count} 回合开始，' if msg.is_next_round else ''
     token = combat.tokens[combat.order.current_token_name]
     player_name = await combat_bot_ctl.format_token_message(token)
-    message = Message(f'{round_start_msg}进入{player_name}的行动轮。')
+    message = Message(f'{round_start_msg}进入{player_name} 的行动轮。')
     await context.send(message)
 
 
@@ -122,10 +122,10 @@ async def reorder_token(topic: str, data: str):
             delta = f'后移 {current_rank - last_rank} 位'
         else:
             continue
-        messages.append(f'\n\t- {player_name}{delta}，目前处于第 {current_rank + 1} 位。')
+        messages.append(f'  - {player_name} {delta}，目前处于第 {current_rank + 1} 位。')
     if not messages:
         return
-    await context.send(Message(['战斗的先攻顺序被变更。', *messages]))
+    await context.send(Message('\n'.join(['战斗的先攻顺序被变更。', *messages])))
 
 
 @bus.on('epicteller.combat.add_combat_token')
