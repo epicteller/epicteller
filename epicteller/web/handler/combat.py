@@ -47,9 +47,6 @@ async def combat_live(websocket: WebSocket, url_token: str):
     except EpictellerError as e:
         await websocket.close(e.code)
         return
-    if combat.state == CombatState.ENDED:
-        await websocket.close(1000)
-        return
     await websocket.accept()
 
     topics = [
@@ -74,8 +71,6 @@ async def combat_live(websocket: WebSocket, url_token: str):
         )
         out_data = out_msg.dict(exclude={'action': {'combat_id'}}, exclude_none=True)
         await websocket.send_json(out_data)
-        if msg.action == 'epicteller.combat.end':
-            await websocket.close(1000)
 
     try:
         bus.attach(topics, actor)
