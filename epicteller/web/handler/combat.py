@@ -80,7 +80,9 @@ async def combat_live(websocket: WebSocket, url_token: str):
     try:
         bus.attach(topics, actor)
         while True:
-            _ = await websocket.receive_text()
+            data = await websocket.receive_json()
+            if data.get('type') == 'ping':
+                await websocket.send_json({'type': 'pong'})
     except WebSocketDisconnect:
         pass
     finally:
