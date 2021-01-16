@@ -21,6 +21,11 @@ async def startup():
     bus_init()
     await redis.pool.init()
 
+
+@app.get('/')
+async def hello():
+    return {'message': 'Hello!'}
+
 app.include_router(combat.router, prefix='/combats')
 app.include_router(member.router)
 app.include_router(auth.router, prefix='/auth')
