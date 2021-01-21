@@ -41,6 +41,7 @@ loguru = "*"
 pexpect = "*"
 sentry-sdk = "*"
 nonebot-plugin-sentry = "*"
+gitpython = "*"
 
 [dev-packages]
 # Testing
