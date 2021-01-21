@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 import pickle
 import random
+import secrets
 from typing import Optional, Iterable, Dict, Union
 
 from datum import Parser
@@ -32,6 +33,8 @@ async def update_memory_dump():
 
 async def refresh_randomizer(seed: bytes = None):
     global rand
+    if not seed:
+        seed = secrets.token_bytes(16)
     rand = random.Random(seed)
     await update_memory_dump()
 
