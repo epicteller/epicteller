@@ -43,6 +43,7 @@ class Config:
     RESPONSE_TIMEOUT = 600
 
     RUNTIME_ID = f'{random.randint(0, 9999):04d}'
+    HOSTNAME = os.getenv('HOSTNAME')
 
     ACCESS_TOKEN_TTL = 86400
     REFRESH_TOKEN_TTL = 30 * 86400

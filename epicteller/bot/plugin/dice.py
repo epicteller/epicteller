@@ -153,7 +153,7 @@ refresh = on_command('refresh', permission=permission.PRIVATE_FRIEND)
 
 @refresh.handle()
 async def _(bot: Bot, event: MessageEvent, state: dict):
-    seed = event.raw_message.strip().encode('utf8')
+    seed = str(event.get_message()).strip().encode('utf8')
     if not seed:
         seed = None
     await dice_ctl.refresh_randomizer(seed)
