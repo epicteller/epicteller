@@ -15,6 +15,12 @@ allow_origins = ['*']
 if Config.DEBUG:
     allow_origins.append("*")
 
+app.add_middleware(CORSMiddleware,
+                   allow_origins=allow_origins,
+                   allow_credentials=True,
+                   allow_methods=["*"],
+                   allow_headers=["*"])
+
 
 @app.on_event('startup')
 async def startup():
@@ -30,8 +36,3 @@ app.include_router(combat.router, prefix='/combats')
 app.include_router(member.router)
 app.include_router(auth.router, prefix='/auth')
 
-app.add_middleware(CORSMiddleware,
-                   allow_origins=allow_origins,
-                   allow_credentials=True,
-                   allow_methods=["*"],
-                   allow_headers=["*"])
