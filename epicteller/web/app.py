@@ -8,6 +8,7 @@ from epicteller.core import redis
 from epicteller.core.config import Config
 from epicteller.web import bus_init
 from epicteller.web.handler import auth, member, combat
+from epicteller.web.middleware.auth import AuthBackend
 
 app = FastAPI()
 
