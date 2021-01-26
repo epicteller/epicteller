@@ -4,7 +4,7 @@ from enum import Enum
 from typing import Optional, List
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-from pydantic import BaseModel, validator
+from pydantic import BaseModel
 
 from epicteller.core.controller import character as character_ctl
 from epicteller.core.controller import combat as combat_ctl
@@ -12,7 +12,6 @@ from epicteller.core.model.combat import Combat, CombatToken
 from epicteller.core.error.base import NotFoundError, EpictellerError
 from epicteller.core.model.kafka_msg.base import get_msg_model
 from epicteller.core.model.kafka_msg.combat import MsgCombat
-from epicteller.core.util.enum import CombatState
 from epicteller.web import bus
 from epicteller.web.fetcher import combat as combat_fetcher
 from epicteller.web.model.combat import Combat as WebCombat
