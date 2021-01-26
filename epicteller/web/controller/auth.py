@@ -1,33 +1,25 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from fastapi import Depends
-from fastapi.security import OAuth2PasswordBearer
-from jose import jwt, JWTError
-from pydantic import BaseModel
+from typing import Optional
 
-from epicteller.core.config import Config
+from fastapi import Request
+
 from epicteller.core.controller import credential as credential_ctl
 from epicteller.core.controller import member as member_ctl
 from epicteller.core.model.member import Member
 from epicteller.web.error.auth import UnauthorizedError
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl='token')
 
-
-class CredentialPair(BaseModel):
-    access_token: str
-    refresh_token: str
-
-
-async def get_current_member(token: str = Depends(oauth2_scheme)) -> Member:
-    unauthorized_exception = UnauthorizedError()
-    credential = await credential_ctl.get_access_credential(token)
+async def get_login_id(request: Request) -> Optional[int]:
+    session_id: Optional[str] = request.cookies.get('q_c0')
+    if not session_id:
+        return 0
+    credential = await credential_ctl.get_access_credential(session_id)
     if not credential or credential.is_expired:
-        raise unauthorized_exception
-    member = await member_ctl.get_member(credential.member_id)
-    if not member:
-        raise unauthorized_exception
-    return member
+        return 0
+    if credential.is_stale:
+        await credential_ctl.refresh_access_credential(credential)
+    return credential.member_id
 
 
 async def create_credential_pair(member_id: int) -> CredentialPair:

@@ -14,11 +14,15 @@ class Credential(BaseModel):
     member_id: int
     token: str
     created_at: int
-    ttl: int
+    lifetime: int
+
+    @property
+    def ttl(self):
+        return max(self.expired_at - int(time.time()), 0)
 
     @property
     def expired_at(self) -> int:
-        return self.created_at + self.ttl
+        return self.created_at + self.lifetime
 
     @property
     def is_expired(self) -> bool:
@@ -26,7 +30,7 @@ class Credential(BaseModel):
 
     @property
     def is_stale(self) -> bool:
-        return time.time() > self.created_at + self.ttl / 2
+        return self.ttl < Config.ACCESS_TOKEN_LIFETIME / 2
 
     @property
     def jwt(self) -> str:
