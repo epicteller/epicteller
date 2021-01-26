@@ -45,8 +45,7 @@ class Config:
     RUNTIME_ID = f'{random.randint(0, 9999):04d}'
     HOSTNAME = os.getenv('HOSTNAME')
 
-    ACCESS_TOKEN_TTL = 86400
-    REFRESH_TOKEN_TTL = 30 * 86400
+    ACCESS_TOKEN_LIFETIME = 30 * 86400
 
     SENDCLOUD_API_USER = os.getenv('SENDCLOUD_API_USER')
     SENDCLOUD_API_KEY = os.getenv('SENDCLOUD_API_KEY')

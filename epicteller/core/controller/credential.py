@@ -12,19 +12,10 @@ from epicteller.core.model.credential import Credential
 
 async def create_access_credential(member_id: int) -> Credential:
     token = secrets.token_urlsafe(32)
-    ttl = Config.ACCESS_TOKEN_TTL
+    lifetime = Config.ACCESS_TOKEN_LIFETIME
     now = int(time.time())
-    credential = Credential(member_id=member_id, token=token, created_at=now, ttl=ttl)
-    await CredentialDAO.create_access_credential(credential)
-    return credential
-
-
-async def create_refresh_credential(member_id: int) -> Credential:
-    token = secrets.token_urlsafe(32)
-    ttl = Config.REFRESH_TOKEN_TTL
-    now = int(time.time())
-    credential = Credential(member_id=member_id, token=token, created_at=now, ttl=ttl)
-    await CredentialDAO.create_refresh_credential(credential)
+    credential = Credential(member_id=member_id, token=token, created_at=now, lifetime=lifetime)
+    await CredentialDAO.set_access_credential(credential)
     return credential
 
 
@@ -32,16 +23,13 @@ async def revoke_access_credential(token: str):
     await CredentialDAO.revoke_access_credential(token)
 
 
-async def revoke_refresh_credential(token: str):
-    await CredentialDAO.revoke_refresh_credential(token)
-
-
 async def get_access_credential(token: str) -> Optional[Credential]:
     return await CredentialDAO.get_access_credential(token)
 
 
-async def get_refresh_credential(token: str) -> Optional[Credential]:
-    return await CredentialDAO.get_refresh_credential(token)
+async def refresh_access_credential(credential: Credential):
+    credential.lifetime += Config.ACCESS_TOKEN_LIFETIME
+    await CredentialDAO.set_access_credential(credential)
 
 
 async def set_email_validate_token(email: str) -> str:

@@ -12,7 +12,7 @@ class IncorrectEMailPasswordError(EpictellerError):
 class UnauthorizedError(EpictellerError):
     status_code = HTTP_401_UNAUTHORIZED
     message = '登录凭据失效'
-    headers = {'WWW-Authenticate': 'Bearer'}
+    code = 401
 
 
 class EMailUsedError(EpictellerError):

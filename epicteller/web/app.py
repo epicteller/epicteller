@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.authentication import AuthenticationMiddleware
 
 from epicteller.core import redis
 from epicteller.core.config import Config
@@ -20,6 +21,7 @@ app.add_middleware(CORSMiddleware,
                    allow_credentials=True,
                    allow_methods=["*"],
                    allow_headers=["*"])
+app.add_middleware(AuthenticationMiddleware, backend=AuthBackend())
 
 
 @app.on_event('startup')
