@@ -18,12 +18,12 @@ class CredentialDAO:
         await cls.r.pool.expire(f'access_token:{token}', 10)
 
     @classmethod
-    async def set_email_validate_token(cls, token: str, email: str):
-        await cls.r.pool.set(f'email_validate:{token}', email, expire=1800)
+    async def set_email_validate_token(cls, action: str, token: str, email: str):
+        await cls.r.pool.set(f'email_validate:{action}:{token}', email, expire=600)
 
     @classmethod
-    async def get_email_validate_token(cls, token: str) -> Optional[str]:
-        email = await cls.r.pool.get(f'email_validate:{token}')
+    async def get_email_validate_token(cls, action: str, token: str) -> Optional[str]:
+        email = await cls.r.pool.get(f'email_validate:{action}:{token}')
         if not email:
             return
         return email.decode('utf8')

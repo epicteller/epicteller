@@ -32,11 +32,12 @@ async def refresh_access_credential(credential: Credential):
     await CredentialDAO.set_access_credential(credential)
 
 
-async def set_email_validate_token(email: str) -> str:
-    token = ''.join(secrets.choice(string.digits) for _ in range(6))
-    await CredentialDAO.set_email_validate_token(token, email)
+async def set_email_validate_token(action: str, email: str, *, token: Optional[str] = None) -> str:
+    if token is None:
+        token = secrets.token_urlsafe(32)
+    await CredentialDAO.set_email_validate_token(action, token, email)
     return token
 
 
-async def get_email_validate_token(token: str) -> Optional[str]:
-    return await CredentialDAO.get_email_validate_token(token)
+async def get_email_validate_token(action: str, token: str) -> Optional[str]:
+    return await CredentialDAO.get_email_validate_token(action, token)

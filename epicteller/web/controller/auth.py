@@ -16,3 +16,7 @@ async def create_credential(r: Response, member_id: int):
                  secure=True,
                  httponly=True,
                  samesite='lax')
+
+
+async def revoke_credential(r: Response):
+    r.delete_cookie('q_c0', path='/')
