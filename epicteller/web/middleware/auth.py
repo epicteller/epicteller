@@ -11,6 +11,7 @@ from epicteller.core.controller import credential as credential_ctl
 
 class User(BaseUser, BaseModel):
     id: int
+    access_token: str
 
     @property
     def is_authenticated(self) -> bool:
@@ -35,4 +36,4 @@ class AuthBackend(AuthenticationBackend):
             return
         if credential.is_stale:
             await credential_ctl.refresh_access_credential(credential)
-        return AuthCredentials(['login']), User(id=credential.member_id)
+        return AuthCredentials(['login']), User(id=credential.member_id, access_token=session_id)
