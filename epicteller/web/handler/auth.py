@@ -112,13 +112,13 @@ class SendExternalForm(BaseModel):
 
 @requires(['login'], 401)
 @router.post('/validate/send-external', response_model=BasicResponse)
-async def send_external(r: Request, tasks: BackgroundTasks, form: SendExternalForm):
+async def send_external(request: Request, tasks: BackgroundTasks, form: SendExternalForm):
     if form.external_type != 'QQ':
         raise auth_error.InvalidExternalTypeError()
     member = await member_ctl.get_member_by_external(ExternalType.QQ, form.external_id)
     if member:
         raise auth_error.ExternalIDUsedError()
-    member_externals = await member_ctl.get_member_externals(r.user.id)
+    member_externals = await member_ctl.get_member_externals(request.user.id)
     if ExternalType.QQ in member_externals:
         raise auth_error.AlreadyBindExternalError()
     external_id = form.external_id
@@ -126,7 +126,7 @@ async def send_external(r: Request, tasks: BackgroundTasks, form: SendExternalFo
         raise auth_error.InvalidExternalIDError()
     token = ''.join([str(secrets.choice(range(10))) for _ in range(6)])
     email = f'{external_id}@qq.com'
-    await credential_ctl.set_email_validate_token('bind_external', email, token=f'{r.user.id}:{token}')
+    await credential_ctl.set_email_validate_token('bind_external', email, token=f'{request.user.id}:{token}')
     tasks.add_task(worker.email.send_bind_external_email, email, token)
     return BasicResponse()
 
@@ -139,19 +139,19 @@ class ValidateExternalForm(BaseModel):
 
 @requires(['login'], 401)
 @router.post('/validate/external', response_model=BasicResponse)
-async def validate_external(r: Request, form: ValidateExternalForm):
+async def validate_external(request: Request, form: ValidateExternalForm):
     if form.external_type != 'QQ':
         raise auth_error.InvalidExternalTypeError()
     member = await member_ctl.get_member_by_external(ExternalType.QQ, form.external_id)
     if member:
         raise auth_error.ExternalIDUsedError()
-    member_externals = await member_ctl.get_member_externals(r.user.id)
+    member_externals = await member_ctl.get_member_externals(request.user.id)
     if ExternalType.QQ in member_externals:
         raise auth_error.AlreadyBindExternalError()
     external_id = form.external_id
     email = f'{external_id}@qq.com'
-    token = f'{r.user.id}:{form.validate_token}'
+    token = f'{request.user.id}:{form.validate_token}'
     if credential_ctl.get_email_validate_token('bind_external', token) != email:
         raise auth_error.InvalidValidateTokenError()
-    await member_ctl.bind_member_external_id(r.user.id, ExternalType.QQ, external_id)
+    await member_ctl.bind_member_external_id(request.user.id, ExternalType.QQ, external_id)
     return BasicResponse()
