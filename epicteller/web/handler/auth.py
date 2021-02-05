@@ -26,7 +26,7 @@ class RegisterInfo(BaseModel):
     email: str
 
 
-@router.get('/register')
+@router.get('/register', response_model=RegisterInfo)
 async def register_info(token: str = Query(...)):
     email = await credential_ctl.get_email_validate_token('register', token)
     if not email:
@@ -40,7 +40,7 @@ class RegisterForm(BaseModel):
     name: str
 
 
-@router.post('/register')
+@router.post('/register', response_model=BasicResponse)
 async def register(form: RegisterForm, r: Response):
     email = await credential_ctl.get_email_validate_token('register', form.validate_token)
     if not email:
@@ -52,6 +52,7 @@ async def register(form: RegisterForm, r: Response):
                                             email=email,
                                             password=form.password)
     await auth_web_ctl.create_credential(r, member.id)
+    return BasicResponse()
 
 
 class LoginForm(BaseModel):
@@ -59,7 +60,7 @@ class LoginForm(BaseModel):
     password: str
 
 
-@router.post('/login')
+@router.post('/login', response_model=BasicResponse)
 async def login(login_form: LoginForm, r: Response):
     email = login_form.email
     password = login_form.password
@@ -67,6 +68,7 @@ async def login(login_form: LoginForm, r: Response):
     if not member:
         return auth_error.IncorrectEMailPasswordError()
     await auth_web_ctl.create_credential(r, member.id)
+    return BasicResponse()
 
 
 @router.post('/logout', response_model=BasicResponse)
