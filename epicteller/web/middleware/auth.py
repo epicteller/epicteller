@@ -30,10 +30,10 @@ class AuthBackend(AuthenticationBackend):
     async def authenticate(self, r: HTTPConnection):
         session_id: Optional[str] = r.cookies.get('q_c0')
         if not session_id:
-            return
+            return AuthCredentials(), None
         credential = await credential_ctl.get_access_credential(session_id)
         if not credential or credential.is_expired:
-            return
+            return AuthCredentials(), None
         if credential.is_stale:
             await credential_ctl.refresh_access_credential(credential)
         return AuthCredentials(['login']), User(id=credential.member_id, access_token=session_id)

@@ -139,8 +139,8 @@ class ValidateExternalForm(BaseModel):
     validate_token: str
 
 
-@requires(['login'], 401)
 @router.post('/validate/external', response_model=BasicResponse)
+@requires(['login'], 401)
 async def validate_external(request: Request, form: ValidateExternalForm):
     if form.external_type != 'QQ':
         raise auth_error.InvalidExternalTypeError()
