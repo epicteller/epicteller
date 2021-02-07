@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from lru import LRU
-from nonebot import on_message, on_notice, Bot
-from nonebot.adapters.cqhttp import MessageSegment, Message
+from nonebot import on_message, on_notice, Bot, on_command
+from nonebot.adapters.cqhttp import MessageSegment, Message, permission
 from nonebot.adapters.cqhttp.event import MessageEvent, GroupRecallNoticeEvent
 from nonebot.rule import regex
 
@@ -17,9 +16,7 @@ from epicteller.core.util import imghosting
 from epicteller.core.util.enum import MessageType, ExternalType
 
 
-message_cache = LRU(10000)
-
-say = on_message(rule=regex(r'^[^()（）]'), priority=99999)
+say = on_message(rule=regex(r'^[^()（）]'), permission=permission.GROUP, priority=99999)
 
 
 @say.handle()
@@ -33,28 +30,48 @@ async def _(bot: Bot, event: MessageEvent, state: dict):
 
     message = await message_ctl.create_message(episode, character, message_type, content, is_gm)
     internal_message_id = event.message_id
-    message_cache[internal_message_id] = message.id
+    base.message_cache[internal_message_id] = message.id
 
 
 async def prepare(bot: Bot, event: MessageEvent, state: dict):
     is_prepared = await base.prepare_context(say, bot, event, state)
     if not is_prepared:
         await say.finish()
+        return
     msg_text = event.get_plaintext().strip().replace('\r\n', '\n')
-    msg_images = [i for i in event.message if i.type == 'image']
     if msg_text:
         message_type = MessageType.TEXT
         content = TextMessageContent(text=msg_text)
-    elif msg_images:
-        message_type = MessageType.IMAGE
-        image_origin_url = msg_images[0]['data']['url']
-        image_token = await imghosting.upload_image_from_url(image_origin_url)
-        content = ImageMessageContent(image=image_token)
     else:
         await say.finish()
         return
     state['message_type'] = message_type
     state['content'] = content
+
+
+image = on_command('image', aliases={'i'}, permission=permission.GROUP)
+
+
+@image.handle()
+async def _(bot: Bot, event: MessageEvent, state: dict):
+    is_prepared = await base.prepare_context(say, bot, event, state)
+    if not is_prepared:
+        await say.finish()
+        return
+    episode: Episode = state.get('episode')
+    character: Character = state.get('character')
+    is_gm: bool = state.get('is_gm')
+
+    msg_images = [i for i in event.message if i.type == 'image']
+    if not msg_images:
+        await say.finish('🤔 需要上传一张图片哦。')
+        return
+    image_origin_url = msg_images[0]['data']['url']
+    image_token = await imghosting.upload_image_from_url(image_origin_url)
+    content = ImageMessageContent(image=image_token)
+    message = await message_ctl.create_message(episode, character, MessageType.IMAGE, content, is_gm)
+    internal_message_id = event.message_id
+    base.message_cache[internal_message_id] = message.id
 
 
 rollback = on_notice(lambda b, e, d: e.notice_type == 'group_recall')
@@ -70,9 +87,9 @@ async def _(bot: Bot, event: GroupRecallNoticeEvent, state: dict):
     if not episode:
         return
     internal_id = event.message_id
-    if internal_id not in message_cache:
+    if internal_id not in base.message_cache:
         return
-    message_id = message_cache[internal_id]
+    message_id = base.message_cache[internal_id]
     message = await message_ctl.get_message(message_id)
     if not message or message.episode_id != episode.id:
         return

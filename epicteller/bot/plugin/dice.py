@@ -60,7 +60,9 @@ async def _(bot: Bot, event: MessageEvent, state: dict):
         detail=str(result),
         value=value,
     )
-    await message_ctl.create_message(episode, character, MessageType.DICE, content, is_gm)
+    message = await message_ctl.create_message(episode, character, MessageType.DICE, content, is_gm)
+    internal_message_id = event.message_id
+    base.message_cache[internal_message_id] = message.id
 
     # 先攻部分
     if not isinstance(value, int) and not isinstance(value, float):

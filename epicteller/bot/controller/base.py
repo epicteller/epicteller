@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 from typing import Type
 
+from lru import LRU
 from nonebot import Bot
 from nonebot.adapters.cqhttp.event import Event, GroupMessageEvent, MessageEvent
 from nonebot.matcher import Matcher
@@ -13,6 +14,8 @@ from epicteller.core.controller import member as member_ctl
 from epicteller.core.controller import room as room_ctl
 from epicteller.core.tables import table
 from epicteller.core.util.enum import ExternalType
+
+message_cache = LRU(10000)
 
 
 async def prepare_context(matcher: Type[Matcher], bot: Bot, event: MessageEvent, state: dict) -> bool:
