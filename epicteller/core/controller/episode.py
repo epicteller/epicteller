@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import time
 from typing import Optional, Iterable, Dict, Union
 
 from epicteller.core.dao.campaign import CampaignDAO
@@ -71,6 +72,7 @@ async def end_episode(episode: Episode):
     running_episode_id = await RoomRunningEpisodeDAO.get_running_episode_id(episode.room_id)
     async with table.db.begin():
         await EpisodeDAO.update_episode(episode.id,
+                                        ended_at=int(time.time()),
                                         state=int(EpisodeState.ENDED))
         if running_episode_id == episode.id:
             await RoomRunningEpisodeDAO.remove_running_episode(episode.room_id)

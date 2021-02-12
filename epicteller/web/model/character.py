@@ -4,11 +4,13 @@ from typing import Optional
 
 from pydantic import BaseModel
 
+from epicteller.web.model.member import Member
+
 
 class Character(BaseModel):
     id: str
     type: str = 'character'
-    member: Optional[int]  # 暂时先不填充这个了
+    member: Optional[Member]
     name: str
     avatar: str
     description: str

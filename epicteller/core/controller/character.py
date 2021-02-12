@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from typing import Optional, Iterable, Dict, Union
+from typing import Optional, Iterable, Dict, Union, List
 
 from epicteller.core.dao.character import CharacterDAO, CharacterExternalDAO, CharacterCampaignDAO
 from epicteller.core.model.campaign import Campaign
@@ -32,6 +32,10 @@ async def get_character_by_campaign_name(campaign: Campaign, name: str) -> Optio
     if not character_id:
         return
     return await get_character(character_id)
+
+
+async def get_characters_by_owner(member_id: int) -> List[Character]:
+    return await CharacterDAO.get_characters_by_owner(member_id)
 
 
 async def get_character_external_id(character_id: int, external_type: ExternalType) -> Optional[str]:

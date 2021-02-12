@@ -4,17 +4,17 @@ from typing import Optional
 
 from pydantic import BaseModel
 
+from epicteller.web.model.episode import Episode
 from epicteller.web.model.member import Member
 
 
-class Room(BaseModel):
+class Campaign(BaseModel):
     id: str
-    type: str = 'room'
+    room_id: str
     name: str
     description: str
     owner: Member
-    is_removed: Optional[bool]
-    avatar: str
+    state: str
+    last_episode: Optional[Episode]
     created: int
     updated: int
-    member_count: Optional[int]

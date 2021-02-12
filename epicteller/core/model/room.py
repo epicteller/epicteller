@@ -12,6 +12,7 @@ class Room(BaseModel):
     url_token: str
     name: str
     description: str
+    owner_id: int
     is_removed: bool
     current_campaign_id: Optional[int]
     avatar: str

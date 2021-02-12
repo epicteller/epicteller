@@ -100,8 +100,9 @@ class Bus:
             if self.topics:
                 self.consumer.subscribe(self.topics)
             await self.consumer.start()
-        except Exception:
-            raise
+        except Exception as e:
+            logger.error(f'Start kafka consumer error: {e}')
+            return
         try:
             # Consume messages
             async for msg in self.consumer:

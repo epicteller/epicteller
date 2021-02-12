@@ -4,7 +4,7 @@ from enum import Enum
 from typing import Optional, List
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-from pydantic import BaseModel, validator
+from pydantic import BaseModel
 
 from epicteller.core.controller import character as character_ctl
 from epicteller.core.controller import combat as combat_ctl
@@ -12,7 +12,6 @@ from epicteller.core.model.combat import Combat, CombatToken
 from epicteller.core.error.base import NotFoundError, EpictellerError
 from epicteller.core.model.kafka_msg.base import get_msg_model
 from epicteller.core.model.kafka_msg.combat import MsgCombat
-from epicteller.core.util.enum import CombatState
 from epicteller.web import bus
 from epicteller.web.fetcher import combat as combat_fetcher
 from epicteller.web.model.combat import Combat as WebCombat
@@ -28,7 +27,7 @@ async def must_prepare_combat(url_token: str) -> Combat:
     return combat
 
 
-@router.get('/{url_token}', response_model=WebCombat, response_model_exclude_none=True)
+@router.get('/combats/{url_token}', response_model=WebCombat, response_model_exclude_none=True)
 async def get_combat(url_token: str):
     combat = await must_prepare_combat(url_token=url_token)
     web_combat = await combat_fetcher.fetch_combat(combat)
@@ -40,7 +39,7 @@ class CombatLiveMsg(BaseModel):
     action: MsgCombat
 
 
-@router.websocket('/{url_token}')
+@router.websocket('/combats/{url_token}')
 async def combat_live(websocket: WebSocket, url_token: str):
     try:
         combat = await must_prepare_combat(url_token)
@@ -98,7 +97,7 @@ class UpdateCombatArgs(BaseModel):
     current_token: Optional[str]
 
 
-@router.put('/{url_token}', response_model=WebCombat, response_model_exclude_none=True)
+@router.put('/combats/{url_token}', response_model=WebCombat, response_model_exclude_none=True)
 async def update_combat(url_token: str, args: UpdateCombatArgs):
     combat = await must_prepare_combat(url_token)
     if args.action == UpdateCombatArgs.UpdateAction.RUN:
@@ -127,7 +126,7 @@ class CombatTokenOut(BaseModel):
     rank: int
 
 
-@router.post('/{url_token}/tokens', response_model=CombatTokenOut, response_model_exclude_none=True)
+@router.post('/combats/{url_token}/tokens', response_model=CombatTokenOut, response_model_exclude_none=True)
 async def add_combat_token(url_token: str, token_in: CombatTokenIn):
     combat = await must_prepare_combat(url_token)
     character_id: Optional[int] = None
@@ -145,7 +144,7 @@ async def add_combat_token(url_token: str, token_in: CombatTokenIn):
     )
 
 
-@router.delete('/{url_token}/tokens/{token_name}')
+@router.delete('/combats/{url_token}/tokens/{token_name}')
 async def remove_combat_token(url_token: str, token_name: str):
     combat = await must_prepare_combat(url_token)
     await combat_ctl.remove_combat_token(combat, token_name)

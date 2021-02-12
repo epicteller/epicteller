@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import time
+from collections import defaultdict
 from typing import List, Optional, Iterable, Dict
 
 import base62
@@ -118,6 +119,19 @@ class CharacterCampaignDAO:
         results = await table.execute(query)
         character_ids = [int(row.character_id) for row in await results.fetchall()]
         return character_ids
+
+    @classmethod
+    async def get_campaign_ids_by_character_ids(cls, character_ids: List[int]) -> Dict[int, List[int]]:
+        query = select([
+            cls.t.c.character_id,
+            cls.t.c.campaign_id,
+        ]).where(cls.t.c.character_id.in_(character_ids))
+        results = await table.execute(query)
+        rows = await results.fetchall()
+        campaign_map = defaultdict(list)
+        for r in rows:
+            campaign_map[r.character_id].append(r.campaign_id)
+        return dict(campaign_map)
 
     @classmethod
     async def bind_character_to_campaign(cls, character_id: int, name: str, campaign_id: int):

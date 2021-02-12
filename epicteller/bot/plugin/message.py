@@ -89,10 +89,10 @@ async def _(bot: Bot, event: GroupRecallNoticeEvent, state: dict):
     internal_id = event.message_id
     if internal_id not in base.message_cache:
         return
-    message_id = base.message_cache[internal_id]
+    message_id: int = base.message_cache[internal_id]
     message = await message_ctl.get_message(message_id)
     if not message or message.episode_id != episode.id:
         return
-    await message_ctl.remove_message(message_id)
+    await message_ctl.remove_message(message)
     content = message.content
     await rollback.finish(Message(f"🗑️ {MessageSegment.at(event.user_id)} 消息「{content.to_message()}」已删除。"))

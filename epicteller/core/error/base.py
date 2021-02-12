@@ -10,21 +10,17 @@ class EpictellerError(HTTPException):
     status_code = HTTP_403_FORBIDDEN
     message: str = 'Epicteller Error'
     code: int = 10000
-    headers: Dict[str, Any] = None
+    detail: Any = None
 
-    def _get_detail(self):
-        return {
-            'name': self.__class__.__name__,
-            'message': self.message,
-            'code': self.code,
-        }
+    @property
+    def name(self) -> str:
+        return self.__class__.__name__
 
-    def __init__(self, message: str = None, headers: Dict[str, Any] = None):
+    def __init__(self, *, message: str = None, code: int = None):
         if message:
             self.message = message
-        if headers:
-            self.headers = headers
-        super().__init__(status_code=self.status_code, detail=self._get_detail(), headers=self.headers)
+        if code:
+            self.code = code
 
 
 class ForbiddenError(EpictellerError):
