@@ -10,7 +10,7 @@ from epicteller.core import redis
 from epicteller.core.config import Config
 from epicteller.core.error.base import EpictellerError
 from epicteller.web import bus_init
-from epicteller.web.handler import auth, me, combat
+from epicteller.web.handler import auth, me, combat, episode
 from epicteller.web.middleware.auth import AuthBackend
 
 app = FastAPI()
@@ -64,7 +64,8 @@ async def _(request: Request, e: ValidationError):
 async def hello():
     return {'message': 'Hello!'}
 
-app.include_router(combat.router, prefix='/combats')
-app.include_router(me.router, prefix='/me')
-app.include_router(auth.router, prefix='/auth')
+app.include_router(combat.router)
+app.include_router(me.router)
+app.include_router(auth.router)
+app.include_router(episode.router)
 

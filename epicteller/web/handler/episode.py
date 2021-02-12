@@ -1,26 +1,49 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from sanic import response
-from sanic.request import Request
-from sanic.views import HTTPMethodView
+from typing import Optional
+
+from fastapi import APIRouter
+from fastapi import Request
 
 from epicteller.core.controller import message as message_ctl
-from epicteller.web import app
+from epicteller.web.controller.paging import generate_paging_info
+from epicteller.web.fetcher import message as message_fetcher
+from epicteller.web.model import PagingResponse
+from epicteller.web.model.message import Message as WebMessage
+
+router = APIRouter()
 
 
-@app.route('/episodes/<episode_id:int>/messages')
-class EpisodeMessagesHandler(HTTPMethodView):
-    async def get(self, request: Request, episode_id: int):
-        oldest = request.args.get('oldest')
-        latest = request.args.get('latest')
-        if oldest and oldest != '0':
-            oldest = await message_ctl.get_message(url_token=oldest)
-            oldest = oldest.id if oldest else None
-        elif oldest and oldest == '0':
-            oldest = 0
-        elif latest:
-            latest = await message_ctl.get_message(url_token=latest)
-            latest = latest.id if latest else None
-        limit = request.args.get('limit', 20)
-        messages = await message_ctl.get_episode_messages(episode_id, oldest=oldest, latest=latest, limit=limit)
-        return response.json(messages)
+@router.get('/episodes/{episode_id}/messages', response_model=PagingResponse[WebMessage])
+async def get(r: Request, episode_id: int,
+              before: Optional[str] = None, after: Optional[str] = None, around: Optional[str] = None,
+              limit: Optional[int] = 50):
+    before_id: Optional[int] = None
+    if before:
+        before_msg = await message_ctl.get_message(url_token=before)
+        before_id = before_msg.id if before_msg else None
+    after_id: Optional[int] = None
+    # after == '' 语义：取章节最开始的消息
+    if after is not None:
+        after_msg = await message_ctl.get_message(url_token=after)
+        after_id = after_msg.id if after_msg else 0
+    around_id: Optional[int] = None
+    if around:
+        around_msg = await message_ctl.get_message(url_token=around)
+        around_id = around_msg.id if around_msg else None
+    messages = await message_ctl.get_episode_messages(episode_id,
+                                                      before=before_id,
+                                                      after=after_id,
+                                                      around=around_id,
+                                                      limit=limit)
+    is_end = len(messages) < limit
+    web_message_map = await message_fetcher.batch_fetch_message({m.id: m for m in messages})
+    web_messages = [web_message_map.get(m.id) for m in messages]
+    paging_info = await generate_paging_info(
+        r,
+        before=web_messages[0].id if (around or before) and len(web_messages) else None,
+        after=web_messages[-1].id if (around or after) and len(web_messages) else None,
+        limit=limit,
+        is_end=is_end,
+    )
+    return PagingResponse[WebMessage](data=web_messages, paging=paging_info)

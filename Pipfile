@@ -43,6 +43,7 @@ nonebot-plugin-sentry = "*"
 gitpython = "*"
 cryptography = "*"
 tencentcloud = "*"
+asyncio = "*"
 
 [dev-packages]
 # Testing

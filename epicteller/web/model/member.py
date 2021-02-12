@@ -10,6 +10,7 @@ from epicteller.core.util.enum import ExternalType
 class MeSettings(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=20)
     headline: Optional[str] = Field(None, max_length=200)
+    avatar: Optional[str] = Field(None, regex=r'^v1-[0-9a-f]{32}$')
 
 
 class ExternalBindForm(BaseModel):

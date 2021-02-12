@@ -4,7 +4,7 @@ import time
 from typing import List, Optional, Iterable, Dict
 
 import base62
-from sqlalchemy import select, and_
+from sqlalchemy import select, and_, func
 
 from epicteller.core.model.room import Room, RoomExternalInfo
 from epicteller.core.tables import table
@@ -21,6 +21,7 @@ def _format_room(result) -> Optional[Room]:
         url_token=result.url_token,
         name=result.name,
         description=result.description,
+        owner_id=result.owner_id,
         is_removed=bool(result.is_removed),
         current_campaign_id=result.current_campaign_id or None,
         avatar=result.avatar,
@@ -99,20 +100,46 @@ class RoomMemberDAO:
     t = table.room_member
 
     @classmethod
-    async def get_member_ids_by_room(cls, room_id: int, offset: int = 0, limit: int = 20) -> List[int]:
-        query = select([cls.t.c.member_id]).where(cls.t.c.room_id == room_id).offset(offset).limit(limit)
+    async def get_member_ids_by_room(cls, room_id: int, start: int = 0, limit: int = 20) -> List[int]:
+        query = select([cls.t.c.member_id]).where(and_(cls.t.c.room_id == room_id,
+                                                       cls.t.c.member_id > start)).limit(limit)
         result = await table.execute(query)
         rows = await result.fetchall()
         member_ids = [row.member_id for row in rows]
         return member_ids
 
     @classmethod
-    async def get_room_ids_by_member(cls, member_id: int, offset: int = 0, limit: int = 20) -> List[int]:
-        query = select([cls.t.c.room_id]).where(cls.t.c.member_id == member_id).offset(offset).limit(limit)
+    async def get_room_ids_by_member(cls, member_id: int, start: int = 0, limit: int = 20) -> List[int]:
+        query = select([cls.t.c.room_id]).where(and_(cls.t.c.member_id == member_id,
+                                                     cls.t.c.room_id > start)).limit(limit)
         result = await table.execute(query)
         rows = await result.fetchall()
         room_ids = [row.room_id for row in rows]
         return room_ids
+
+    @classmethod
+    async def batch_get_room_member_count(cls, room_ids: List[int]) -> Dict[int, int]:
+        query = select([cls.t.c.room_id,
+                        func.count(cls.t.c.member_id).label('c')]
+                       ).where(cls.t.c.room_id.in_(room_ids)).group_by(cls.t.c.room_id)
+        result = await table.execute(query)
+        rows = await result.fetchall()
+        count_map = {rid: 0 for rid in room_ids}
+        for r in rows:
+            count_map[r.room_id] = r.c
+        return count_map
+
+    @classmethod
+    async def batch_get_room_count_by_member(cls, member_ids: List[int]) -> Dict[int, int]:
+        query = select([cls.t.c.member_id,
+                        func.count(cls.t.c.room_id).label('c')]
+                       ).where(cls.t.c.member_id.in_(member_ids)).group_by(cls.t.c.member_id)
+        result = await table.execute(query)
+        rows = await result.fetchall()
+        count_map = {mid: 0 for mid in member_ids}
+        for r in rows:
+            count_map[r.member_id] = r.c
+        return count_map
 
     @classmethod
     async def is_member_in_room(cls, room_id: int, member_id: int) -> bool:
@@ -130,7 +157,7 @@ class RoomMemberDAO:
         await table.execute(query)
 
     @classmethod
-    async def remove_member(cls, room_id: int, member_id: int) -> None:
+    async def remove_room_member(cls, room_id: int, member_id: int) -> None:
         query = cls.t.delete().where(and_(cls.t.c.room_id == room_id, cls.t.c.member_id == member_id))
         await table.execute(query)
 

@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import time
-from typing import Optional, Iterable, Dict
+from typing import Optional, Iterable, Dict, List
 
 import base62
-from sqlalchemy import select
+from sqlalchemy import select, and_, func
 
 from epicteller.core.model.campaign import Campaign
 from epicteller.core.tables import table
@@ -62,6 +62,35 @@ class CampaignDAO:
         result = await table.execute(query)
         rows = await result.fetchall()
         return {row.url_token: _format_campaign(row) for row in rows}
+
+    @classmethod
+    async def get_campaign_ids_by_room(cls, room_id: int, after: int = 0, limit: int = 20) -> List[int]:
+        query = select([cls.t.c.id]).where(and_(
+            cls.t.c.room_id == room_id,
+            cls.t.c.id > after,
+        )).limit(limit)
+        result = await table.execute(query)
+        rows = await result.fetchall()
+        return [row.id for row in rows]
+
+    @classmethod
+    async def get_campaign_ids_by_owner(cls, member_id: int) -> List[int]:
+        query = select([cls.t.c.id]).where(cls.t.c.owner_id == member_id)
+        result = await table.execute(query)
+        rows = await result.fetchall()
+        return [row.id for row in rows]
+
+    @classmethod
+    async def batch_get_campaign_count_by_room(cls, room_ids: List[int]) -> Dict[int, int]:
+        query = select([cls.t.c.room_id,
+                        func.count(cls.t.c.id).label('c')]
+                       ).where(cls.t.c.room_id.in_(room_ids)).group_by(cls.t.c.room_id)
+        result = await table.execute(query)
+        rows = await result.fetchall()
+        count_map = {rid: 0 for rid in room_ids}
+        for r in rows:
+            count_map[r.room_id] = r.c
+        return count_map
 
     @classmethod
     async def update_campaign(cls, campaign_id: int, **kwargs) -> None:

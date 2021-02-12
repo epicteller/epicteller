@@ -115,7 +115,7 @@ class MessageDAO:
 
     @classmethod
     async def create_message(cls, episode_id: int, character_id: int, message_type: MessageType,
-                             content: dict, is_gm: bool, created: Optional[int]=None) -> Message:
+                             content: dict, is_gm: bool, created: Optional[int] = None) -> Message:
         url_token = base62.encode(get_id())
         if not created:
             created = int(time.time())

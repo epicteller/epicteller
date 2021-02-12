@@ -1,10 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from typing import Optional, Iterable, Dict, Union
+import asyncio
+from typing import Optional, Iterable, Dict, Union, List
 
 from epicteller.core.dao.campaign import CampaignDAO
+from epicteller.core.dao.character import CharacterCampaignDAO, CharacterDAO
 from epicteller.core.dao.room import RoomDAO
 from epicteller.core.model.campaign import Campaign
+from epicteller.core.model.room import Room
 from epicteller.core.util.enum import CampaignState
 
 
@@ -24,6 +27,33 @@ async def batch_get_campaign(campaign_ids: Iterable[int]=None, *,
     elif url_tokens:
         return await CampaignDAO.batch_get_campaign_by_url_token(url_tokens)
     return {}
+
+
+async def get_campaigns_by_room(room: Room, after: int = 0, limit: int = 20) -> List[Campaign]:
+    campaign_ids = await CampaignDAO.get_campaign_ids_by_room(room.id, after, limit)
+    campaign_map = await batch_get_campaign(campaign_ids)
+    return [campaign_map.get(cid) for cid in campaign_ids]
+
+
+async def get_campaign_count_by_room(room: Room) -> int:
+    count_map = await CampaignDAO.batch_get_campaign_count_by_room([room.id])
+    return count_map.get(room.id, 0)
+
+
+async def get_participated_campaign_ids(member_id: int) -> List[int]:
+    characters = await CharacterDAO.get_characters_by_owner(member_id)
+    character_ids = [c.id for c in characters]
+    character_campaign_map, owned_campaign_ids = await asyncio.gather(
+        CharacterCampaignDAO.get_campaign_ids_by_character_ids(character_ids),
+        CampaignDAO.get_campaign_ids_by_owner(member_id),
+    )
+    campaign_ids = set()
+    for cids in character_campaign_map.values():
+        campaign_ids.update(cids)
+    campaign_ids.update(owned_campaign_ids)
+    campaign_ids = list(campaign_ids)
+    campaign_ids.sort(reverse=True)
+    return campaign_ids
 
 
 async def active_campaign(campaign: Campaign):

@@ -25,7 +25,7 @@ async def batch_fetch_combats(combats: Dict[int, CoreCombat]) -> Dict[int, WebCo
     tokens = list(itertools.chain(*tokens))
     character_ids = list({token.character_id for token in tokens if token.character_id})
     characters = await character_ctl.batch_get_character(character_ids)
-    web_characters = await character_fetcher.batch_fetch_characters(characters)
+    web_characters = await character_fetcher.batch_fetch_character(characters)
     results = {}
     for cid, c in combats.items():
         if not c:
