@@ -51,4 +51,4 @@ async def send_bind_external_email(email: str, token: str):
     await send_email(email,
                      '绑定外部帐号',
                      '你好！请输入下方的验证码来绑定外部帐号。如果你不知道这封邮件为什么会发送给你，请简单地忽略该邮件：',
-                     token)
+                     f'<h2>{token}</h2>')
