@@ -14,9 +14,10 @@ T = TypeVar('T')
 
 
 class PagingInfo(BaseModel):
-    is_end: bool
-    next: str
+    is_end: bool = False
+    next: Optional[str]
     previous: Optional[str]
+    total: Optional[int]
 
 
 class PagingResponse(GenericModel, Generic[T]):

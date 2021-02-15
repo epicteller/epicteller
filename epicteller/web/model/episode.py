@@ -7,6 +7,7 @@ from pydantic import BaseModel
 
 class Episode(BaseModel):
     id: str
+    type: str = 'episode'
     room_id: str
     campaign_id: str
     title: str

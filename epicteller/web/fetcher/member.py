@@ -4,6 +4,7 @@ from typing import Optional, Dict
 
 from epicteller.core.controller import member as member_ctl
 from epicteller.core.model.member import Member as CoreMember
+from epicteller.core.util import imghosting
 from epicteller.core.util.enum import ExternalType
 from epicteller.web.model.member import Member as WebMember, Me, MemberExternalInfo
 
@@ -23,7 +24,7 @@ async def batch_fetch_members(members: Dict[int, CoreMember]) -> Dict[int, WebMe
             id=m.url_token,
             name=m.name,
             headline=m.headline,
-            avatar=m.avatar,
+            avatar=imghosting.get_avatar_url(m.avatar),
             created=m.created,
         )
         results[mid] = result
@@ -41,7 +42,8 @@ async def fetch_me(member: Optional[CoreMember]) -> Optional[Me]:
         id=member.url_token,
         name=member.name,
         headline=member.headline,
-        avatar=member.headline,
+        avatar=imghosting.get_avatar_url(member.avatar),
+        avatar_original=imghosting.get_avatar_url(member.avatar, size='r'),
         created=member.created,
         email=member.email,
         external_info=external_info,

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
@@ -10,18 +11,14 @@ from epicteller.core import redis
 from epicteller.core.config import Config
 from epicteller.core.error.base import EpictellerError
 from epicteller.web import bus_init
-from epicteller.web.handler import auth, me, combat, episode
+from epicteller.web.handler import auth, me, combat, episode, campaign, room
 from epicteller.web.middleware.auth import AuthBackend
 
 app = FastAPI()
 
 
-allow_origins = ['*']
-if Config.DEBUG:
-    allow_origins.append("*")
-
 app.add_middleware(CORSMiddleware,
-                   allow_origins=allow_origins,
+                   allow_origin_regex=r'https?://.*\.epicteller\.(test|com)',
                    allow_credentials=True,
                    allow_methods=["*"],
                    allow_headers=["*"])
@@ -47,25 +44,29 @@ async def _(request: Request, e: EpictellerError):
     )
 
 
-@app.exception_handler(ValidationError)
-async def _(request: Request, e: ValidationError):
+async def validation_error_handler(request: Request, e: ValidationError):
     return JSONResponse(
         status_code=400,
         content={
-            'message': 'ValidationError',
+            'message': '数据格式非法',
             'name': 'ValidationError',
             'code': 4000,
             'detail': e.errors(),
         },
     )
 
+app.add_exception_handler(ValidationError, validation_error_handler)
+app.add_exception_handler(RequestValidationError, validation_error_handler)
+
 
 @app.get('/')
 async def hello():
     return {'message': 'Hello!'}
 
+app.include_router(campaign.router)
 app.include_router(combat.router)
 app.include_router(me.router)
 app.include_router(auth.router)
 app.include_router(episode.router)
+app.include_router(room.router)
 

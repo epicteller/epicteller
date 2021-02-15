@@ -11,9 +11,9 @@ from epicteller.web.model import PagingInfo
 async def generate_paging_info(r: Request, *,
                                before: Optional[str] = None,
                                after: Optional[str] = None,
-                               offset: Optional[int] = 0,
+                               offset: Optional[int] = None,
                                limit: Optional[int] = 20,
-                               total: Optional[int] = 0,
+                               total: Optional[int] = None,
                                is_end: Optional[bool] = False) -> PagingInfo:
     url = r.url
     previous_url: Optional[URL] = None
@@ -28,4 +28,5 @@ async def generate_paging_info(r: Request, *,
         is_end = offset >= total
     return PagingInfo(next=str(next_url) if next_url else None,
                       previous=str(previous_url) if previous_url else None,
+                      total=total,
                       is_end=is_end)

@@ -10,11 +10,13 @@ from epicteller.web.model.character import Character
 
 class Message(BaseModel):
     id: str
+    type: str = 'message'
+    campaign_id: str
     episode_id: str
     character: Optional[Character]
     is_removed: Optional[bool]
     is_gm: bool
-    type: str
+    message_type: str
     content: MessageContent
     created: int
     updated: int

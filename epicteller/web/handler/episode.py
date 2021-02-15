@@ -2,10 +2,13 @@
 # -*- coding: utf-8 -*-
 from typing import Optional
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from fastapi import Request
 
+from epicteller.core.controller import episode as episode_ctl
 from epicteller.core.controller import message as message_ctl
+from epicteller.core.error.base import NotFoundError
+from epicteller.core.model.episode import Episode
 from epicteller.web.controller.paging import generate_paging_info
 from epicteller.web.fetcher import message as message_fetcher
 from epicteller.web.model import PagingResponse
@@ -14,8 +17,16 @@ from epicteller.web.model.message import Message as WebMessage
 router = APIRouter()
 
 
-@router.get('/episodes/{episode_id}/messages', response_model=PagingResponse[WebMessage])
-async def get(r: Request, episode_id: int,
+async def prepare(url_token: str):
+    episode = await episode_ctl.get_episode(url_token=url_token)
+    if not episode or episode.is_removed:
+        raise NotFoundError()
+    return episode
+
+
+@router.get('/episodes/{url_token}/messages',
+            response_model_exclude_none=True)
+async def get(r: Request, episode: Episode = Depends(prepare),
               before: Optional[str] = None, after: Optional[str] = None, around: Optional[str] = None,
               limit: Optional[int] = 50):
     before_id: Optional[int] = None
@@ -31,7 +42,7 @@ async def get(r: Request, episode_id: int,
     if around:
         around_msg = await message_ctl.get_message(url_token=around)
         around_id = around_msg.id if around_msg else None
-    messages = await message_ctl.get_episode_messages(episode_id,
+    messages = await message_ctl.get_episode_messages(episode.id,
                                                       before=before_id,
                                                       after=after_id,
                                                       around=around_id,
@@ -41,9 +52,11 @@ async def get(r: Request, episode_id: int,
     web_messages = [web_message_map.get(m.id) for m in messages]
     paging_info = await generate_paging_info(
         r,
-        before=web_messages[0].id if (around or before) and len(web_messages) else None,
-        after=web_messages[-1].id if (around or after) and len(web_messages) else None,
+        before=web_messages[0].id if (around or before or
+                                      (not around and not before and after is None)
+                                      ) and len(web_messages) else None,
+        after=web_messages[-1].id if (around or after is not None) and len(web_messages) else None,
         limit=limit,
         is_end=is_end,
     )
-    return PagingResponse[WebMessage](data=web_messages, paging=paging_info)
+    return PagingResponse[WebMessage](data=web_messages, paging=paging_info).dict(exclude_none=True)

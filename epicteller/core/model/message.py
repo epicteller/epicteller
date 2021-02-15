@@ -50,6 +50,7 @@ class DiceMessageContent(MessageContent):
 class Message(BaseModel):
     id: int
     url_token: str
+    campaign_id: int
     episode_id: int
     character_id: int
     is_removed: bool

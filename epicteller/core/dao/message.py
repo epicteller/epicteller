@@ -30,6 +30,7 @@ def _format_message(result) -> Optional[Message]:
     message = Message(
         id=result.id,
         url_token=result.url_token,
+        campaign_id=result.campaign_id,
         episode_id=result.episode_id,
         character_id=result.character_id,
         type=MessageType(result.type),
@@ -48,6 +49,7 @@ class MessageDAO:
     select_clause = select([
         t.c.id,
         t.c.url_token,
+        t.c.campaign_id,
         t.c.episode_id,
         t.c.character_id,
         t.c.type,
@@ -114,13 +116,14 @@ class MessageDAO:
         await table.execute(query)
 
     @classmethod
-    async def create_message(cls, episode_id: int, character_id: int, message_type: MessageType,
+    async def create_message(cls, campaign_id: int, episode_id: int, character_id: int, message_type: MessageType,
                              content: dict, is_gm: bool, created: Optional[int] = None) -> Message:
         url_token = base62.encode(get_id())
         if not created:
             created = int(time.time())
         values = ObjectDict(
             url_token=url_token,
+            campaign_id=campaign_id,
             episode_id=episode_id,
             character_id=character_id,
             type=int(message_type),
@@ -135,3 +138,10 @@ class MessageDAO:
         values.id = result.lastrowid
         message = _format_message(values)
         return message
+
+    @classmethod
+    async def scan_messages(cls, start_id: int = 0, limit: int = 1000) -> List[Message]:
+        query = cls.select_clause.where(cls.t.c.id > start_id).limit(limit)
+        results = await table.execute(query)
+        messages = [_format_message(result) for result in await results.fetchall()]
+        return messages
