@@ -4,6 +4,7 @@
 import aioredis
 
 from epicteller.core.config import Config
+from epicteller.core.log import logger
 
 
 class Pool:
@@ -15,7 +16,11 @@ class Pool:
     async def init(self):
         if self._pool:
             return
-        self._pool = await aioredis.create_redis_pool(self.url, **self.kwargs)
+        try:
+            self._pool = await aioredis.create_redis_pool(self.url, **self.kwargs)
+        except Exception as e:
+            logger.error(f'Connecting redis error: {e}')
+            raise e
 
     @property
     def pool(self):

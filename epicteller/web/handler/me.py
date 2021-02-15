@@ -72,8 +72,9 @@ async def my_characters(r: Request):
 @requires(['login'])
 async def my_campaigns(r: Request):
     member_id = r.user.id
-    campaign_ids = await campaign_ctl.get_participated_campaign_ids(member_id)
-    campaigns = await campaign_ctl.batch_get_campaign(campaign_ids)
-    web_campaigns = await campaign_fetcher.batch_fetch_campaign(campaigns)
+    campaigns = await campaign_ctl.get_participated_campaigns(member_id)
+    campaign_ids = [c.id for c in campaigns]
+    campaign_map = {c.id: c for c in campaigns}
+    web_campaigns = await campaign_fetcher.batch_fetch_campaign(campaign_map, member_id)
     web_campaigns_list = [web_campaigns.get(cid) for cid in campaign_ids]
     return PagingResponse(data=web_campaigns_list)

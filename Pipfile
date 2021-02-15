@@ -42,6 +42,7 @@ sentry-sdk = "*"
 nonebot-plugin-sentry = "*"
 gitpython = "*"
 cryptography = "*"
+tldextract = "*"
 
 [dev-packages]
 # Testing

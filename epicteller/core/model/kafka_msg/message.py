@@ -14,6 +14,7 @@ class MsgMessage(KafkaMsg):
 @base.action
 class MsgMessageCreate(MsgMessage):
     action = 'epicteller.message.create'
+    campaign_id: int
     episode_id: int
     character_id: int
     is_gm: bool

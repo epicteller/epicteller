@@ -32,14 +32,13 @@ async def _(bot: Bot, event: MessageEvent, state: dict):
     last_episode = await episode_ctl.get_episode(last_episode_id)
     if not last_episode or last_episode.state == EpisodeState.ENDED:
         try:
-            episode = await episode_ctl.start_new_episode(room, campaign)
+            await episode_ctl.start_new_episode(room, campaign)
         except error.episode.EpisodeRunningError as e:
             await start.finish('❌ 现在已经有一个章节在进行中啦！')
-        await start.send('—— 🎬 新章开始 🎬 ——')
+        await start.finish('—— 🎬 新章开始 🎬 ——')
     else:
-        episode = await episode_ctl.get_episode(campaign.last_episode_id)
         try:
-            await episode_ctl.resume_episode(episode)
+            await episode_ctl.resume_episode(last_episode)
         except error.episode.EpisodeEndedError as e:
             await start.finish('❌ 章节已经结束啦。')
         except error.episode.EpisodeRunningError as e:

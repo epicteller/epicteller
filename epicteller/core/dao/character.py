@@ -65,7 +65,7 @@ class CharacterDAO:
 
     @classmethod
     async def get_characters_by_owner(cls, member_id: int) -> List[Character]:
-        query = cls.select_clause.where(cls.t.c.owner_id == member_id)
+        query = cls.select_clause.where(cls.t.c.member_id == member_id)
         results = await table.execute(query)
         characters = [_format_character(room) for room in await results.fetchall()]
         return characters
@@ -163,6 +163,15 @@ class CharacterExternalDAO:
         rows = await result.fetchall()
         externals = {ExternalType(row.type): row.external_id for row in rows}
         return externals
+
+    @classmethod
+    async def get_character_ids_by_external(cls, external_type: ExternalType, external_id: str) -> List[int]:
+        query = select([cls.t.c.character_id]).where(and_(cls.t.c.type == int(external_type),
+                                                          cls.t.c.external_id == external_id))
+        result = await table.execute(query)
+        rows = await result.fetchall()
+        character_ids = [r.character_id for r in rows]
+        return character_ids
 
     @classmethod
     async def bind_character_external_id(cls, character_id: int, external_type: ExternalType, external_id: str):

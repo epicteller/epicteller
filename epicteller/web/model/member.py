@@ -25,6 +25,7 @@ class MemberExternalInfo(BaseModel):
 
 class Member(BaseModel):
     id: str
+    type: str = 'member'
     name: str
     headline: str
     avatar: str
@@ -33,4 +34,5 @@ class Member(BaseModel):
 
 class Me(Member):
     email: str
+    avatar_original: str
     external_info: MemberExternalInfo

@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import secrets
-from enum import Enum
 from typing import Optional
 
-from fastapi import APIRouter, Body, Request, BackgroundTasks, Response, Query
+from fastapi import APIRouter, Request, BackgroundTasks, Response, Query
 from pydantic import Field
 from pydantic.main import BaseModel
 from pydantic.networks import EmailStr
@@ -12,8 +11,8 @@ from starlette.authentication import requires
 
 from epicteller.core.controller import credential as credential_ctl
 from epicteller.core.controller import member as member_ctl
+from epicteller.core import worker
 from epicteller.core.util.enum import ExternalType
-from epicteller.web import worker
 from epicteller.web.error import auth as auth_error
 from epicteller.web.controller import auth as auth_web_ctl
 from epicteller.web.middleware.auth import User
@@ -41,7 +40,7 @@ class RegisterForm(BaseModel):
 
 
 @router.post('/register', response_model=BasicResponse)
-async def register(form: RegisterForm, r: Response):
+async def register(req: Request, resp: Response, form: RegisterForm):
     email = await credential_ctl.get_email_validate_token('register', form.validate_token)
     if not email:
         raise auth_error.InvalidValidateTokenError()
@@ -51,7 +50,7 @@ async def register(form: RegisterForm, r: Response):
     member = await member_ctl.create_member(name=form.name,
                                             email=email,
                                             password=form.password)
-    await auth_web_ctl.create_credential(r, member.id)
+    await auth_web_ctl.create_credential(req, resp, member.id)
     return BasicResponse()
 
 
@@ -61,19 +60,19 @@ class LoginForm(BaseModel):
 
 
 @router.post('/login', response_model=BasicResponse)
-async def login(login_form: LoginForm, r: Response):
+async def login(req: Request, resp: Response, login_form: LoginForm):
     email = login_form.email
     password = login_form.password
     member = await member_ctl.check_member_email_password(email, password)
     if not member:
-        return auth_error.IncorrectEMailPasswordError()
-    await auth_web_ctl.create_credential(r, member.id)
+        raise auth_error.IncorrectEMailPasswordError()
+    await auth_web_ctl.create_credential(req, resp, member.id)
     return BasicResponse()
 
 
 @router.post('/logout', response_model=BasicResponse)
 async def logout(req: Request, resp: Response):
-    if not req.user:
+    if req.user.id == 0:
         return BasicResponse()
     user: User = req.user
     await credential_ctl.revoke_access_credential(user.access_token)

@@ -40,20 +40,22 @@ async def get_campaign_count_by_room(room: Room) -> int:
     return count_map.get(room.id, 0)
 
 
-async def get_participated_campaign_ids(member_id: int) -> List[int]:
+async def get_participated_campaigns(member_id: int) -> List[Campaign]:
     characters = await CharacterDAO.get_characters_by_owner(member_id)
     character_ids = [c.id for c in characters]
-    character_campaign_map, owned_campaign_ids = await asyncio.gather(
+    character_campaign_id_map, owned_campaign_ids = await asyncio.gather(
         CharacterCampaignDAO.get_campaign_ids_by_character_ids(character_ids),
         CampaignDAO.get_campaign_ids_by_owner(member_id),
     )
     campaign_ids = set()
-    for cids in character_campaign_map.values():
+    for cids in character_campaign_id_map.values():
         campaign_ids.update(cids)
     campaign_ids.update(owned_campaign_ids)
     campaign_ids = list(campaign_ids)
-    campaign_ids.sort(reverse=True)
-    return campaign_ids
+    campaign_map = await batch_get_campaign(campaign_ids)
+    campaigns = [campaign_map.get(cid) for cid in campaign_map]
+    campaigns.sort(key=lambda c: c.updated, reverse=True)
+    return campaigns
 
 
 async def active_campaign(campaign: Campaign):

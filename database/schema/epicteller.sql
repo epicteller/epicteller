@@ -193,6 +193,7 @@ CREATE TABLE IF NOT EXISTS `message`
 (
     `id`           BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
     `url_token`    VARCHAR(200)        NOT NULL,
+    `campaign_id`  BIGINT(20) UNSIGNED NOT NULL,
     `episode_id`   BIGINT(20) UNSIGNED NOT NULL,
     `character_id` BIGINT(20) UNSIGNED NOT NULL,
     `type`         TINYINT(2)          NOT NULL DEFAULT 0,
@@ -203,6 +204,7 @@ CREATE TABLE IF NOT EXISTS `message`
     `updated`      BIGINT(20) UNSIGNED NOT NULL DEFAULT 0,
     PRIMARY KEY (`id`),
     UNIQUE KEY `unq_url_token` (`url_token`),
+    KEY `idx_campaign_id` (`campaign_id`, `is_removed`, `id`),
     KEY `idx_episode_id` (`episode_id`, `is_removed`, `id`),
     KEY `idx_character_id` (`character_id`)
 ) ENGINE = InnoDB

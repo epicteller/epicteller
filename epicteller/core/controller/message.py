@@ -54,9 +54,17 @@ async def create_message(episode: Episode, character: Optional[Character], messa
         character_id = 0
     else:
         character_id = character.id
-    message = await MessageDAO.create_message(episode.id, character_id, message_type, content.dict(), is_gm)
+    message = await MessageDAO.create_message(
+        episode.campaign_id,
+        episode.id,
+        character_id,
+        message_type,
+        content.dict(),
+        is_gm
+    )
     await kafka.publish(message_msg.MsgMessageCreate(
         message_id=message.id,
+        campaign_id=episode.campaign_id,
         episode_id=episode.id,
         character_id=character_id,
         is_gm=is_gm,
