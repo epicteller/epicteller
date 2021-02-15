@@ -8,10 +8,9 @@ from pydantic import ValidationError
 from starlette.middleware.authentication import AuthenticationMiddleware
 
 from epicteller.core import redis
-from epicteller.core.config import Config
 from epicteller.core.error.base import EpictellerError
 from epicteller.web import bus_init
-from epicteller.web.handler import auth, me, combat, episode, campaign, room
+from epicteller.web.handler import auth, me, combat, episode, campaign, room, misc
 from epicteller.web.middleware.auth import AuthBackend
 
 app = FastAPI()
@@ -66,6 +65,7 @@ async def hello():
 app.include_router(campaign.router)
 app.include_router(combat.router)
 app.include_router(me.router)
+app.include_router(misc.router)
 app.include_router(auth.router)
 app.include_router(episode.router)
 app.include_router(room.router)
