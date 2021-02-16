@@ -57,6 +57,11 @@ async def create_member(name: str, email: str, password: str) -> Member:
     return member
 
 
+async def change_member_password(member_id: int, password: str):
+    passhash = _gen_passhash(password)
+    await MemberDAO.update_member(member_id, passhash=passhash)
+
+
 async def bind_member_external_id(member_id: int, external_type: ExternalType, external_id: str) -> None:
     await MemberExternalDAO.bind_member_external_id(member_id, external_type, external_id)
 

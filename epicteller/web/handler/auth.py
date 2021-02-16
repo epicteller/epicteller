@@ -11,6 +11,7 @@ from pydantic.networks import EmailStr
 from epicteller.core.controller import credential as credential_ctl
 from epicteller.core.controller import member as member_ctl
 from epicteller.core import worker
+from epicteller.core.log import logger
 from epicteller.core.util.enum import ExternalType
 from epicteller.web.error import auth as auth_error
 from epicteller.web.controller import auth as auth_web_ctl
@@ -81,6 +82,21 @@ async def logout(req: Request, resp: Response):
     return BasicResponse()
 
 
+class ResetPasswordForm(BaseModel):
+    password: str = Field(min_length=10, max_length=50)
+    validate_token: str
+
+
+@router.post('/reset-password', response_model=BasicResponse)
+async def reset_password(form: ResetPasswordForm):
+    email = await credential_ctl.get_email_validate_token('reset_password', form.validate_token)
+    if not email:
+        raise auth_error.InvalidValidateTokenError()
+    member = await member_ctl.get_member(email=email)
+    await member_ctl.change_member_password(member.id, form.password)
+    return BasicResponse()
+
+
 class EmailValidateForm(BaseModel):
     email: EmailStr
 
@@ -96,11 +112,12 @@ async def email_validate(tasks: BackgroundTasks, form: EmailValidateForm):
     return BasicResponse()
 
 
-@router.post('/validate/reset-password', response_model=BasicResponse)
-async def reset_password(tasks: BackgroundTasks, form: EmailValidateForm):
+@router.post('/validate/reset-password-email', response_model=BasicResponse)
+async def send_reset_password_email(tasks: BackgroundTasks, form: EmailValidateForm):
     email = form.email
     member = await member_ctl.get_member(email=email)
     if not member:
+        logger.warning(f'Member not found: {email}')
         return BasicResponse()
     token = await credential_ctl.set_email_validate_token('reset_password', email)
     tasks.add_task(worker.email.send_reset_email, email, token)
