@@ -5,6 +5,7 @@ import json
 import httpx
 
 from epicteller.core.config import Config
+from epicteller.core.log import logger
 
 
 async def send_email(email: str, title: str, content: str, link: str):
