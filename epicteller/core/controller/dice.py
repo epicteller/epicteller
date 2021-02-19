@@ -31,6 +31,15 @@ async def update_memory_dump():
     await DiceDAO.update_memory_dump(Config.RUNTIME_ID, data)
 
 
+async def receive_memory_dump(dump: Optional[bytes] = None):
+    global rand
+    if not dump:
+        dump = await DiceDAO.get_memory_dump(Config.RUNTIME_ID)
+    if not dump:
+        return
+    rand = pickle.loads(dump)
+
+
 async def refresh_randomizer(seed: bytes = None):
     global rand
     if not seed:

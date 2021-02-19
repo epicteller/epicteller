@@ -8,6 +8,7 @@ from pydantic import ValidationError
 from starlette.middleware.authentication import AuthenticationMiddleware
 
 from epicteller.core import redis
+from epicteller.core.config import Config
 from epicteller.core.error.base import EpictellerError
 from epicteller.web import bus_init
 from epicteller.web.handler import auth, me, combat, episode, campaign, room, misc
@@ -16,8 +17,12 @@ from epicteller.web.middleware.auth import AuthBackend
 app = FastAPI()
 
 
+origin_regex = r'https?://.*\.epicteller\.(test|com)'
+if Config.DEBUG:
+    origin_regex = r'.*'
+
 app.add_middleware(CORSMiddleware,
-                   allow_origin_regex=r'https?://.*\.epicteller\.(test|com)',
+                   allow_origin_regex=origin_regex,
                    allow_credentials=True,
                    allow_methods=["*"],
                    allow_headers=["*"])
