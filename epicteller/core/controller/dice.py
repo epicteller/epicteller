@@ -18,9 +18,13 @@ parser = Parser()
 rand = random.Random()
 
 
+def get_rand_obj() -> random.Random:
+    return rand
+
+
 async def roll_dice(expr: str) -> Result:
     component = parser.parse(expr)
-    component.set_dice_generator(lambda face: rand.randint(1, face))
+    component.set_dice_generator(lambda face: get_rand_obj().randint(1, face))
     result = component.to_result()
     await update_memory_dump()
     return result
