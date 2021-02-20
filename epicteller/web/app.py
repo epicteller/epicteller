@@ -17,7 +17,7 @@ from epicteller.web.middleware.auth import AuthBackend
 app = FastAPI()
 
 
-origin_regex = r'https?://.*\.epicteller\.(test|com)'
+origin_regex = r'https?://.*\.epicteller\.com'
 if Config.DEBUG:
     origin_regex = r'.*'
 
