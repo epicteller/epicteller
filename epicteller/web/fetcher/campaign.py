@@ -61,7 +61,7 @@ async def batch_fetch_campaign(campaigns: Dict[int, CoreCampaign], login_id: int
             relationship = CampaignRelationship(is_gm=login_id == c.owner_id)
             if my_characters := [c for c in character_map.values()
                                  if c.member_id == login_id and c.id in campaign_character_ids_map.get(cid, [])]:
-                character = web_character_map.get(my_characters[0].id)
+                character = web_character_map.get(my_characters[-1].id)
                 relationship.using_character = character
                 relationship.is_player = character is not None
             result.relationship = relationship
