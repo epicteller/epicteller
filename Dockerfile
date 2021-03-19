@@ -4,7 +4,7 @@ FROM python:${INSTALL_PYTHON_VERSION}-slim AS base
 
 WORKDIR /app
 COPY ["./", "./"]
-RUN pip install pipenv
+RUN pip install poetry
 ENV PYTHONPATH "${PYTHONPATH}:."
 
 # =============================== PRODUCTION-BASE ==============================
@@ -13,7 +13,7 @@ FROM base AS production-base
 RUN apt-get update \
     && apt-get install -y --no-install-recommends build-essential gcc libc6-dev git \
     && rm -rf /var/lib/apt/lists/* \
-    && pipenv install \
+    && poetry install \
     && apt-get purge -y --auto-remove build-essential gcc libc6-dev
 
 # ================================= PRODUCTION =================================

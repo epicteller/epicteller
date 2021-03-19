@@ -1,8 +1,7 @@
 #!/usr/bin/env sh
 set -e
 
-source ./shell_scripts/auto_pipenv.sh
-auto_pipenv_shell
+source "$(poetry env info --path)/bin/activate"
 
 if [ $# -eq 0 ] || [ "${1#-}" != "$1" ]; then
   set -- supervisord "$@"
