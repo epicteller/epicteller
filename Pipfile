@@ -28,7 +28,7 @@ aiokafka = "*"
 bcrypt = "*"
 httpx = "*"
 cos-python-sdk-v5 = "*"
-pillow = ">=8.1.1"
+pillow = "*"
 fastapi = "*"
 uvicorn = {extras = ["standard"],version = "*"}
 python-jose = "*"
