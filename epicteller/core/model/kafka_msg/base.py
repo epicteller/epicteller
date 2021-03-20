@@ -16,7 +16,10 @@ _msg_model_map: Dict[str, KafkaMsg] = {}
 
 
 def action(cls: KafkaMsg):
-    topic = cls.action
+    if hasattr(cls, 'action'):
+        topic = cls.action
+    else:
+        topic = cls.__fields__['action'].get_default()
     _msg_model_map[topic] = cls
     return cls
 

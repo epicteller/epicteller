@@ -36,6 +36,7 @@ nonebot-plugin-sentry = "*"
 gitpython = "*"
 cryptography = "*"
 tldextract = "*"
+pydantic = "1.7.3"
 
 [tool.poetry.dev-dependencies]
 pytest = ">=4.6.3"
