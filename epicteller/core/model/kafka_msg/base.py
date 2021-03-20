@@ -16,7 +16,7 @@ _msg_model_map: Dict[str, KafkaMsg] = {}
 
 
 def action(cls: KafkaMsg):
-    topic = cls.__fields__['action'].get_default()
+    topic = cls.action
     _msg_model_map[topic] = cls
     return cls
 
