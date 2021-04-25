@@ -34,15 +34,15 @@ async def _(bot: Bot, event: MessageEvent, state: dict):
 
 
 async def prepare(bot: Bot, event: MessageEvent, state: dict):
-    is_prepared = await base.prepare_context(say, bot, event, state)
-    if not is_prepared:
-        await say.finish()
-        return
     msg_text = event.get_plaintext().strip().replace('\r\n', '\n')
     if msg_text:
         message_type = MessageType.TEXT
         content = TextMessageContent(text=msg_text)
     else:
+        await say.finish()
+        return
+    is_prepared = await base.prepare_context(say, bot, event, state)
+    if not is_prepared:
         await say.finish()
         return
     state['message_type'] = message_type

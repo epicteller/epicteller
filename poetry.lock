@@ -121,6 +121,14 @@ lxml = ["lxml"]
 
 [[package]]
 category = "main"
+description = "A decorator for caching properties in classes."
+name = "cached-property"
+optional = false
+python-versions = "*"
+version = "1.5.2"
+
+[[package]]
+category = "main"
 description = "Python package for providing Mozilla's CA Bundle."
 name = "certifi"
 optional = false
@@ -724,7 +732,7 @@ uvicorn = ">=0.11.5,<0.12.0"
 websockets = ">=8.1,<9.0"
 
 [package.dependencies.pydantic]
-extras = ["dotenv", "typing_extensions"]
+extras = ["typing_extensions", "dotenv"]
 version = ">=1.7.3,<2.0.0"
 
 [package.extras]
@@ -1404,7 +1412,7 @@ python-versions = "*"
 version = "0.3"
 
 [metadata]
-content-hash = "f4b1597e53f20cd712fecef62a7b774fb5a4a97d4dbf6970257e964485af0aab"
+content-hash = "cfe92456903772328eae170fbdaf97e469027436c5a950e72f512f7663ade0ca"
 lock-version = "1.0"
 python-versions = "^3.9"
 
@@ -1481,6 +1489,10 @@ beautifulsoup4 = [
     {file = "beautifulsoup4-4.9.3-py2-none-any.whl", hash = "sha256:4c98143716ef1cb40bf7f39a8e3eec8f8b009509e74904ba3a7b315431577e35"},
     {file = "beautifulsoup4-4.9.3-py3-none-any.whl", hash = "sha256:fff47e031e34ec82bf17e00da8f592fe7de69aeea38be00523c04623c04fb666"},
     {file = "beautifulsoup4-4.9.3.tar.gz", hash = "sha256:84729e322ad1d5b4d25f805bfa05b902dd96450f43842c4e99067d5e1369eb25"},
+]
+cached-property = [
+    {file = "cached-property-1.5.2.tar.gz", hash = "sha256:9fa5755838eecbb2d234c3aa390bd80fbd3ac6b6869109bfc1b499f7bd89a130"},
+    {file = "cached_property-1.5.2-py2.py3-none-any.whl", hash = "sha256:df4f613cf7ad9a588cc381aaf4a512d26265ecebd5eb9e1ba12f1319eb85a6a0"},
 ]
 certifi = [
     {file = "certifi-2020.12.5-py2.py3-none-any.whl", hash = "sha256:719a74fb9e33b9bd44cc7f3a8d94bc35e4049deebe19ba7d8e108280cfd59830"},
