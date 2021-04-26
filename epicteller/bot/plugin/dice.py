@@ -24,7 +24,7 @@ from epicteller.core.model.message import DiceMessageContent
 from epicteller.core.model.room import Room
 from epicteller.core.util.enum import DiceType, MessageType, CombatState
 
-dice = on_message(rule=regex(r'^[#:：]|^(\.r)'))
+dice = on_message(rule=regex(r'^[#＃:：]|^(\.r)'))
 
 
 @dice.handle()
