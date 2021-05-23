@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import re
+
 from nonebot import on_message, on_notice, Bot, on_command
 from nonebot.adapters.cqhttp import MessageSegment, Message, permission
 from nonebot.adapters.cqhttp.event import MessageEvent, GroupRecallNoticeEvent
@@ -15,8 +17,10 @@ from epicteller.core.model.message import TextMessageContent, ImageMessageConten
 from epicteller.core.util import imghosting
 from epicteller.core.util.enum import MessageType, ExternalType
 
+VALID_MESSAGE_REGEX_PATTERN = r'^[^()（）]'
+VALID_MESSAGE_REGEX = re.compile(VALID_MESSAGE_REGEX_PATTERN)
 
-say = on_message(rule=regex(r'^[^()（）]'), permission=permission.GROUP, priority=99999)
+say = on_message(rule=regex(VALID_MESSAGE_REGEX_PATTERN), permission=permission.GROUP, priority=99999)
 
 
 @say.handle()
@@ -35,7 +39,7 @@ async def _(bot: Bot, event: MessageEvent, state: dict):
 
 async def prepare(bot: Bot, event: MessageEvent, state: dict):
     msg_text = event.get_plaintext().strip().replace('\r\n', '\n')
-    if msg_text:
+    if msg_text and VALID_MESSAGE_REGEX.search(msg_text):
         message_type = MessageType.TEXT
         content = TextMessageContent(text=msg_text)
     else:
