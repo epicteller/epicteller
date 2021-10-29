@@ -34,7 +34,7 @@ async def _(bot: Bot, event: MessageEvent, state: dict):
     result, reason = await must_get_dice_result(bot, event, state)
     value = result.value
     reason_clause = f"以「{reason}」的名义" if reason else ''
-    msg = f"🎲 {MessageSegment.at(event.user_id)} {reason_clause}掷出了"
+    msg = f"🎲 {get_operator_name(event)}{reason_clause}掷出了"
     if isinstance(value, Iterable):
         dice_type = DiceType.ARRAY
         msg += f"一串骰子，分别是 {', '.join(map(str, value))} 点。\n"
@@ -82,6 +82,13 @@ async def _(bot: Bot, event: MessageEvent, state: dict):
     except error.combat.CombatTokenAlreadyExistsError:
         await dice.finish(f'「{token_name}」已存在于先攻列表，无法再次追加。')
         return
+
+
+def get_operator_name(event: MessageEvent):
+    if event.get_event_name().startswith('message.group'):
+        return f"{MessageSegment.at(event.user_id)} "
+    else:
+        return '你'
 
 
 async def prepare(bot: Bot, event: MessageEvent, state: dict):
