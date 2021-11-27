@@ -144,7 +144,7 @@ async def reorder_tokens(combat: Combat, token_names: List[str]) -> Combat:
 
 async def add_combat_token(combat: Combat, token: CombatToken) -> int:
     if token.name in combat.tokens or token.name in combat.order.order_list:
-        raise error.combat.CombatTokenAlreadyExistsError(token.name)
+        raise error.combat.CombatTokenAlreadyExistsError()
     combat.tokens[token.name] = token
     combat.order.order_list.append(token.name)
     # 先攻模式下，顺序强制按照先攻值降序排列
