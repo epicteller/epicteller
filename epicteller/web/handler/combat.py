@@ -35,6 +35,7 @@ async def get_combat(url_token: str):
 
 
 class CombatLiveMsg(BaseModel):
+    type: str
     combat: WebCombat
     action: MsgCombat
 
@@ -65,6 +66,7 @@ async def combat_live(websocket: WebSocket, url_token: str):
             return
         new_combat = await combat_ctl.get_combat(combat.id)
         out_msg = CombatLiveMsg(
+            type='data',
             combat=await combat_fetcher.fetch_combat(new_combat),
             action=msg,
         )
@@ -122,6 +124,7 @@ class CombatTokenIn(BaseModel):
 
 
 class CombatTokenOut(BaseModel):
+    combat: WebCombat
     token: WebCombatToken
     rank: int
 
@@ -139,13 +142,14 @@ async def add_combat_token(url_token: str, token_in: CombatTokenIn):
     rank = await combat_ctl.add_combat_token(combat, token)
     web_token = await combat_fetcher.fetch_combat_token(token)
     return CombatTokenOut(
+        combat=await combat_fetcher.fetch_combat(combat),
         token=web_token,
         rank=rank,
     )
 
 
-@router.delete('/combats/{url_token}/tokens/{token_name}')
+@router.delete('/combats/{url_token}/tokens/{token_name}', response_model=WebCombat, response_model_exclude_none=True)
 async def remove_combat_token(url_token: str, token_name: str):
     combat = await must_prepare_combat(url_token)
     await combat_ctl.remove_combat_token(combat, token_name)
-    return {'success': True}
+    return await combat_fetcher.fetch_combat(combat)

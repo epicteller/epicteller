@@ -62,14 +62,14 @@ class MessageDAO:
     
     @classmethod
     async def batch_get_message_by_id(cls, message_ids: Iterable[int]) -> Dict[int, Message]:
-        query = cls.select_clause.where(cls.t.c.id.in_(message_ids))
+        query = cls.select_clause.where(cls.t.c.id.in_(list(set(message_ids))))
         result = await table.execute(query)
         rows = await result.fetchall()
         return {row.id: _format_message(row) for row in rows}
 
     @classmethod
     async def batch_get_message_by_url_token(cls, url_tokens: Iterable[str]) -> Dict[str, Message]:
-        query = cls.select_clause.where(cls.t.c.url_token.in_(url_tokens))
+        query = cls.select_clause.where(cls.t.c.url_token.in_(list(set(url_tokens))))
         result = await table.execute(query)
         rows = await result.fetchall()
         return {row.url_token: _format_message(row) for row in rows}
@@ -79,7 +79,9 @@ class MessageDAO:
         query = cls.select_clause.where(and_(
             cls.t.c.episode_id == episode_id,
             cls.t.c.is_removed == 0,
-        )).order_by(desc(cls.t.c.id)).limit(limit)
+        )).order_by(desc(cls.t.c.id))
+        if limit >= 0:
+            query = query.limit(limit)
         results = await table.execute(query)
         messages = [_format_message(result) for result in await results.fetchall()]
         messages.reverse()
@@ -110,6 +112,8 @@ class MessageDAO:
 
     @classmethod
     async def update_message(cls, message_id: int, **kwargs) -> None:
+        if len(kwargs) == 0:
+            return
         if 'updated' not in kwargs:
             kwargs['updated'] = int(time.time())
         query = cls.t.update().values(kwargs).where(cls.t.c.id == message_id)

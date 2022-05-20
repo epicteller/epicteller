@@ -51,17 +51,17 @@ class CharacterDAO:
 
     @classmethod
     async def batch_get_character_by_id(cls, character_ids: Iterable[int]) -> Dict[int, Character]:
-        query = cls.select_clause.where(cls.t.c.id.in_(character_ids))
+        query = cls.select_clause.where(cls.t.c.id.in_(list(set(character_ids))))
         result = await table.execute(query)
         rows = await result.fetchall()
         return {row.id: _format_character(row) for row in rows}
 
     @classmethod
     async def batch_get_character_by_url_token(cls, url_tokens: Iterable[str]) -> Dict[str, Character]:
-        query = cls.select_clause.where(cls.t.c.url_token.in_(url_tokens))
+        query = cls.select_clause.where(cls.t.c.url_token.in_(list(set(url_tokens))))
         result = await table.execute(query)
         rows = await result.fetchall()
-        return {row.url_token: _format_character(result) for row in rows}
+        return {row.url_token: _format_character(row) for row in rows}
 
     @classmethod
     async def get_characters_by_owner(cls, member_id: int) -> List[Character]:
@@ -72,6 +72,8 @@ class CharacterDAO:
 
     @classmethod
     async def update_character(cls, character_id: int, **kwargs) -> None:
+        if len(kwargs) == 0:
+            return
         if 'updated' not in kwargs:
             kwargs['updated'] = int(time.time())
         query = cls.t.update().values(kwargs).where(cls.t.c.id == character_id)
@@ -125,7 +127,7 @@ class CharacterCampaignDAO:
         query = select([
             cls.t.c.character_id,
             cls.t.c.campaign_id,
-        ]).where(cls.t.c.character_id.in_(character_ids))
+        ]).where(cls.t.c.character_id.in_(list(set(character_ids))))
         results = await table.execute(query)
         rows = await results.fetchall()
         campaign_map = defaultdict(list)

@@ -11,21 +11,20 @@ from epicteller.core import redis
 from epicteller.core.config import Config
 from epicteller.core.error.base import EpictellerError
 from epicteller.web import bus_init
-from epicteller.web.handler import auth, me, combat, episode, campaign, room, misc
+from epicteller.web.handler import auth, me, combat, episode, campaign, room, misc, character
 from epicteller.web.middleware.auth import AuthBackend
 
 app = FastAPI()
 
+cors_options = dict(
+    allow_origin_regex=r'.*' if Config.DEBUG else r'https?://.*\.epicteller\.com',
+    allow_origins='*' if Config.DEBUG else None,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-origin_regex = r'https?://.*\.epicteller\.com'
-if Config.DEBUG:
-    origin_regex = r'.*'
-
-app.add_middleware(CORSMiddleware,
-                   allow_origin_regex=origin_regex,
-                   allow_credentials=True,
-                   allow_methods=["*"],
-                   allow_headers=["*"])
+app.add_middleware(CORSMiddleware, **cors_options)
 app.add_middleware(AuthenticationMiddleware, backend=AuthBackend())
 
 
@@ -59,6 +58,7 @@ async def validation_error_handler(request: Request, e: ValidationError):
         },
     )
 
+
 app.add_exception_handler(ValidationError, validation_error_handler)
 app.add_exception_handler(RequestValidationError, validation_error_handler)
 
@@ -67,11 +67,12 @@ app.add_exception_handler(RequestValidationError, validation_error_handler)
 async def hello():
     return {'message': 'Hello!'}
 
+
 app.include_router(campaign.router)
+app.include_router(character.router)
 app.include_router(combat.router)
 app.include_router(me.router)
 app.include_router(misc.router)
 app.include_router(auth.router)
 app.include_router(episode.router)
 app.include_router(room.router)
-

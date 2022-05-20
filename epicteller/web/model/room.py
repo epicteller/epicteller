@@ -18,3 +18,4 @@ class Room(BaseModel):
     created: int
     updated: int
     member_count: Optional[int]
+    has_running_campaign: bool

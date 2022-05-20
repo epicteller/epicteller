@@ -20,3 +20,7 @@ class EpisodeRunningError(EpisodeError):
 
 class EpisodeEndedError(EpisodeError):
     code = 20003
+
+
+class EpisodeNotRunningError(EpisodeError):
+    code = 20004

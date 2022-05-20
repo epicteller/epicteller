@@ -53,7 +53,7 @@ async def my_rooms(r: Request, after: Optional[str] = None, offset: Optional[int
     web_rooms_map = await room_fetcher.batch_fetch_room(rooms)
     web_rooms = [web_rooms_map.get(rid) for rid in room_ids]
     paging = await generate_paging_info(r,
-                                        after=rooms[-1].url_token if len(rooms) > 0 else None,
+                                        after=web_rooms[-1].id if len(rooms) > 0 else None,
                                         offset=offset, limit=limit, total=total)
     return PagingResponse[WebRoom](data=web_rooms, paging=paging)
 
@@ -63,7 +63,7 @@ async def my_rooms(r: Request, after: Optional[str] = None, offset: Optional[int
 async def my_characters(r: Request):
     member_id = r.user.id
     characters = await character_ctl.get_characters_by_owner(member_id)
-    web_characters_map = await character_fetcher.batch_fetch_character({c.id: c for c in characters})
+    web_characters_map = await character_fetcher.batch_fetch_character({c.id: c for c in characters}, r.user.id)
     web_characters = [web_characters_map.get(c.id) for c in characters]
     return PagingResponse(data=web_characters)
 

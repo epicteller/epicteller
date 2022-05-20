@@ -33,7 +33,7 @@ async def batch_get_message(message_ids: Iterable[int] = None, *,
 
 async def get_episode_messages(episode_id: int, *,
                                before: Optional[int] = None, after: Optional[int] = None, around: Optional[int] = None,
-                               limit: int = 40) -> List[Message]:
+                               limit: int = 50) -> List[Message]:
     if after is not None:
         return await MessageDAO.get_episode_messages_from_oldest(episode_id, after, limit)
     elif before is not None:

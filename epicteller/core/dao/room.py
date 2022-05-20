@@ -48,14 +48,14 @@ class RoomDAO:
 
     @classmethod
     async def batch_get_room_by_id(cls, room_ids: Iterable[int]) -> Dict[int, Room]:
-        query = cls.select_clause.where(cls.t.c.id.in_(room_ids))
+        query = cls.select_clause.where(cls.t.c.id.in_(list(set(room_ids))))
         result = await table.execute(query)
         rows = await result.fetchall()
         return {row.id: _format_room(row) for row in rows}
 
     @classmethod
     async def batch_get_room_by_url_token(cls, url_tokens: Iterable[str]) -> Dict[str, Room]:
-        query = cls.select_clause.where(cls.t.c.url_token.in_(url_tokens))
+        query = cls.select_clause.where(cls.t.c.url_token.in_(list(set(url_tokens))))
         result = await table.execute(query)
         rows = await result.fetchall()
         return {row.url_token: _format_room(row) for row in rows}
@@ -69,6 +69,8 @@ class RoomDAO:
 
     @classmethod
     async def update_room(cls, room_id: int, **kwargs) -> None:
+        if len(kwargs) == 0:
+            return
         if 'updated' not in kwargs:
             kwargs['updated'] = int(time.time())
         query = cls.t.update().values(kwargs).where(cls.t.c.id == room_id)
@@ -121,7 +123,7 @@ class RoomMemberDAO:
     async def batch_get_room_member_count(cls, room_ids: List[int]) -> Dict[int, int]:
         query = select([cls.t.c.room_id,
                         func.count(cls.t.c.member_id).label('c')]
-                       ).where(cls.t.c.room_id.in_(room_ids)).group_by(cls.t.c.room_id)
+                       ).where(cls.t.c.room_id.in_(list(set(room_ids)))).group_by(cls.t.c.room_id)
         result = await table.execute(query)
         rows = await result.fetchall()
         count_map = {rid: 0 for rid in room_ids}
@@ -133,7 +135,7 @@ class RoomMemberDAO:
     async def batch_get_room_count_by_member(cls, member_ids: List[int]) -> Dict[int, int]:
         query = select([cls.t.c.member_id,
                         func.count(cls.t.c.room_id).label('c')]
-                       ).where(cls.t.c.member_id.in_(member_ids)).group_by(cls.t.c.member_id)
+                       ).where(cls.t.c.member_id.in_(list(set(member_ids)))).group_by(cls.t.c.member_id)
         result = await table.execute(query)
         rows = await result.fetchall()
         count_map = {mid: 0 for mid in member_ids}

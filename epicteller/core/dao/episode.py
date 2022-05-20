@@ -52,14 +52,14 @@ class EpisodeDAO:
     
     @classmethod
     async def batch_get_episode_by_id(cls, episode_ids: Iterable[int]) -> Dict[int, Episode]:
-        query = cls.select_clause.where(cls.t.c.id.in_(episode_ids))
+        query = cls.select_clause.where(cls.t.c.id.in_(list(set(episode_ids))))
         result = await table.execute(query)
         rows = await result.fetchall()
         return {row.id: _format_episode(row) for row in rows}
 
     @classmethod
     async def batch_get_episode_by_url_token(cls, url_tokens: Iterable[str]) -> Dict[str, Episode]:
-        query = cls.select_clause.where(cls.t.c.url_token.in_(url_tokens))
+        query = cls.select_clause.where(cls.t.c.url_token.in_(list(set(url_tokens))))
         result = await table.execute(query)
         rows = await result.fetchall()
         return {row.url_token: _format_episode(row) for row in rows}
@@ -77,7 +77,20 @@ class EpisodeDAO:
         return episode_ids
 
     @classmethod
+    async def get_episode_ids_by_campaign(cls, campaign_id: int) -> List[int]:
+        query = select([cls.t.c.id]).where(
+            cls.t.c.campaign_id == campaign_id,
+        )
+        result = await table.execute(query)
+        rows = await result.fetchall()
+        episode_ids = [row.id for row in rows]
+        episode_ids.sort()
+        return episode_ids
+
+    @classmethod
     async def update_episode(cls, episode_id: int, **kwargs) -> None:
+        if len(kwargs) == 0:
+            return
         if 'updated' not in kwargs:
             kwargs['updated'] = int(time.time())
         query = cls.t.update().values(kwargs).where(cls.t.c.id == episode_id)

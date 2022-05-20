@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import time
-from typing import Optional, Iterable, Dict, Union
+from typing import Optional, Iterable, Dict, Union, List
 
 from epicteller.core.dao.campaign import CampaignDAO
 from epicteller.core.dao.episode import EpisodeDAO
@@ -31,6 +31,12 @@ async def batch_get_episode(episode_ids: Iterable[int]=None, *,
     elif url_tokens:
         return await EpisodeDAO.batch_get_episode_by_url_token(url_tokens)
     return {}
+
+
+async def get_episodes_by_campaign(campaign_id: int, offset: int = 0, limit: int = 10) -> List[Episode]:
+    episode_ids = await EpisodeDAO.get_episode_ids_by_campaign(campaign_id)
+    episodes_map = await batch_get_episode(episode_ids)
+    return [episodes_map.get(episode_id) for episode_id in episode_ids]
 
 
 async def start_new_episode(room: Room, campaign: Campaign, title: str=const.DEFAULT_EPISODE_TITLE) -> Episode:
@@ -81,6 +87,10 @@ async def end_episode(episode: Episode):
 
 async def rename_episode(episode: Episode, title: str):
     await EpisodeDAO.update_episode(episode.id, title=title)
+
+
+async def update_episode(episode: Episode, **kwargs):
+    await EpisodeDAO.update_episode(episode.id, **kwargs)
 
 
 async def get_room_running_episode(room: Room) -> Optional[Episode]:

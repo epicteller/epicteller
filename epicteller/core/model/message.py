@@ -24,6 +24,8 @@ class TextMessageContent(MessageContent):
 
 class ImageMessageContent(MessageContent):
     image: str
+    width: Optional[int]
+    height: Optional[int]
 
     def to_message(self):
         image_url = imghosting.get_full_url(self.image)

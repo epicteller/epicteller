@@ -23,6 +23,7 @@ class Combat(BaseModel):
     id: int
     url_token: str
     room_id: int
+    campaign_id: int
     state: CombatState
     is_removed: bool
     tokens: Dict[str, CombatToken]

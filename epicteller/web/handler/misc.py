@@ -19,6 +19,8 @@ class UploadForm(BaseModel):
 class UploadResponse(BasicResponse):
     token: str
     url: str
+    width: int
+    height: int
 
 
 @router.post('/image-upload', response_model=UploadResponse)
@@ -28,5 +30,6 @@ async def image_upload(form: UploadForm):
         data = base64.b64decode(form.data)
     except:
         raise BadRequestError()
-    token = await imghosting.upload_image(data)
-    return UploadResponse(token=token, url=imghosting.get_full_url(token))
+    token, width, height = await imghosting.upload_image(data)
+    return UploadResponse(token=token, url=imghosting.get_full_url(token),
+                          width=width, height=height)

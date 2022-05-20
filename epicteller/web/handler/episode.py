@@ -5,13 +5,17 @@ from typing import Optional
 from fastapi import APIRouter, Depends
 from fastapi import Request
 
+from epicteller.core.controller import campaign as campaign_ctl
 from epicteller.core.controller import episode as episode_ctl
 from epicteller.core.controller import message as message_ctl
 from epicteller.core.error.base import NotFoundError
 from epicteller.core.model.episode import Episode
 from epicteller.web.controller.paging import generate_paging_info
+from epicteller.web.error.permission import PermissionDeniedError
 from epicteller.web.fetcher import message as message_fetcher
-from epicteller.web.model import PagingResponse
+from epicteller.web.middleware.auth import requires
+from epicteller.web.model import PagingResponse, BasicResponse
+from epicteller.web.model.episode import Episode as WebEpisode, UpdateEpisode
 from epicteller.web.model.message import Message as WebMessage
 
 router = APIRouter()
@@ -25,6 +29,7 @@ async def prepare(url_token: str):
 
 
 @router.get('/episodes/{url_token}/messages',
+            response_model=PagingResponse[WebMessage],
             response_model_exclude_none=True)
 async def get(r: Request, episode: Episode = Depends(prepare),
               before: Optional[str] = None, after: Optional[str] = None, around: Optional[str] = None,
@@ -48,7 +53,7 @@ async def get(r: Request, episode: Episode = Depends(prepare),
                                                       around=around_id,
                                                       limit=limit)
     is_end = len(messages) < limit
-    web_message_map = await message_fetcher.batch_fetch_message({m.id: m for m in messages})
+    web_message_map = await message_fetcher.batch_fetch_message({m.id: m for m in messages}, r.user.id)
     web_messages = [web_message_map.get(m.id) for m in messages]
     paging_info = await generate_paging_info(
         r,
@@ -60,3 +65,20 @@ async def get(r: Request, episode: Episode = Depends(prepare),
         is_end=is_end,
     )
     return PagingResponse[WebMessage](data=web_messages, paging=paging_info).dict(exclude_none=True)
+
+
+@router.put('/episodes/{url_token}',
+            response_model=BasicResponse,
+            response_model_exclude_none=True)
+@requires(['login'])
+async def update_episode(r: Request, update: UpdateEpisode,
+                         episode: Episode = Depends(prepare)):
+    member_id = r.user.id
+    campaign = await campaign_ctl.get_campaign(episode.campaign_id)
+    if not campaign:
+        raise NotFoundError()
+    if campaign.owner_id != member_id:
+        raise PermissionDeniedError()
+    update_dict = update.dict(exclude_unset=True)
+    await episode_ctl.update_episode(episode, **update_dict)
+    return BasicResponse()

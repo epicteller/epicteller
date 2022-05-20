@@ -1,11 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from typing import Optional
+from typing import Optional, Union
 
 from pydantic import BaseModel
 
-from epicteller.core.model.message import MessageContent
 from epicteller.web.model.character import Character
+
+
+class MessageRelationship(BaseModel):
+    is_owner: Optional[bool]
 
 
 class Message(BaseModel):
@@ -17,6 +20,7 @@ class Message(BaseModel):
     is_removed: Optional[bool]
     is_gm: bool
     message_type: str
-    content: MessageContent
+    content: dict
     created: int
     updated: int
+    relationship: Optional[MessageRelationship]

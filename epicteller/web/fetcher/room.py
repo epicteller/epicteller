@@ -36,6 +36,7 @@ async def batch_fetch_room(rooms: Dict[int, CoreRoom]) -> Dict[int, WebRoom]:
             created=r.created,
             updated=r.updated,
             member_count=count_map.get(r.id),
+            has_running_campaign=bool(r.current_campaign_id),
         )
         results[r.id] = result
     return results

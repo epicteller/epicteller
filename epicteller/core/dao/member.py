@@ -46,7 +46,7 @@ class MemberDAO:
 
     @classmethod
     async def batch_get_member_by_id(cls, member_ids: Iterable[int]) -> Dict[int, Member]:
-        query = cls.select_clause.where(cls.t.c.id.in_(member_ids))
+        query = cls.select_clause.where(cls.t.c.id.in_(list(set(member_ids))))
         result = await table.execute(query)
         rows = await result.fetchall()
         members = {row.id: _format_member(row) for row in rows}
@@ -54,7 +54,7 @@ class MemberDAO:
 
     @classmethod
     async def batch_get_member_by_url_token(cls, url_tokens: Iterable[str]) -> Dict[str, Member]:
-        query = cls.select_clause.where(cls.t.c.url_token.in_(url_tokens))
+        query = cls.select_clause.where(cls.t.c.url_token.in_(list(set(url_tokens))))
         result = await table.execute(query)
         rows = await result.fetchall()
         members = {row.url_token: _format_member(row) for row in rows}
@@ -74,6 +74,8 @@ class MemberDAO:
 
     @classmethod
     async def update_member(cls, member_id: int, **kwargs) -> None:
+        if len(kwargs) == 0:
+            return
         if 'updated' not in kwargs:
             kwargs['updated'] = int(time.time())
         query = cls.t.update().values(kwargs).where(cls.t.c.id == member_id)

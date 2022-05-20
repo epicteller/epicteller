@@ -51,14 +51,14 @@ class CampaignDAO:
     
     @classmethod
     async def batch_get_campaign_by_id(cls, campaign_ids: Iterable[int]) -> Dict[int, Campaign]:
-        query = cls.select_clause.where(cls.t.c.id.in_(campaign_ids))
+        query = cls.select_clause.where(cls.t.c.id.in_(list(set(campaign_ids))))
         result = await table.execute(query)
         rows = await result.fetchall()
         return {row.id: _format_campaign(row) for row in rows}
 
     @classmethod
     async def batch_get_campaign_by_url_token(cls, url_tokens: Iterable[str]) -> Dict[str, Campaign]:
-        query = cls.select_clause.where(cls.t.c.url_token.in_(url_tokens))
+        query = cls.select_clause.where(cls.t.c.url_token.in_(list(set(url_tokens))))
         result = await table.execute(query)
         rows = await result.fetchall()
         return {row.url_token: _format_campaign(row) for row in rows}
@@ -84,7 +84,7 @@ class CampaignDAO:
     async def batch_get_campaign_count_by_room(cls, room_ids: List[int]) -> Dict[int, int]:
         query = select([cls.t.c.room_id,
                         func.count(cls.t.c.id).label('c')]
-                       ).where(cls.t.c.room_id.in_(room_ids)).group_by(cls.t.c.room_id)
+                       ).where(cls.t.c.room_id.in_(list(set(room_ids)))).group_by(cls.t.c.room_id)
         result = await table.execute(query)
         rows = await result.fetchall()
         count_map = {rid: 0 for rid in room_ids}
@@ -94,6 +94,8 @@ class CampaignDAO:
 
     @classmethod
     async def update_campaign(cls, campaign_id: int, **kwargs) -> None:
+        if len(kwargs) == 0:
+            return
         if 'updated' not in kwargs:
             kwargs['updated'] = int(time.time())
         query = cls.t.update().values(kwargs).where(cls.t.c.id == campaign_id)

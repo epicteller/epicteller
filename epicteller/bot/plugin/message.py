@@ -71,8 +71,8 @@ async def _(bot: Bot, event: MessageEvent, state: dict):
         await say.finish('🤔 需要上传一张图片哦。')
         return
     image_origin_url = msg_images[0]['data']['url']
-    image_token = await imghosting.upload_image_from_url(image_origin_url)
-    content = ImageMessageContent(image=image_token)
+    image_token, width, height = await imghosting.upload_image_from_url(image_origin_url)
+    content = ImageMessageContent(image=image_token, width=width, height=height)
     message = await message_ctl.create_message(episode, character, MessageType.IMAGE, content, is_gm)
     internal_message_id = event.message_id
     base.message_cache[internal_message_id] = message.id

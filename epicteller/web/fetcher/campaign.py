@@ -5,10 +5,12 @@ import itertools
 from typing import Dict, Optional, List
 
 from epicteller.core.controller import character as character_ctl
+from epicteller.core.controller import combat as combat_ctl
 from epicteller.core.controller import member as member_ctl
 from epicteller.core.controller import room as room_ctl
 from epicteller.core.model.campaign import Campaign as CoreCampaign
 from epicteller.web.fetcher import character as character_fetcher
+from epicteller.web.fetcher import combat as combat_fetcher
 from epicteller.web.fetcher import member as member_fetcher
 from epicteller.web.model.campaign import Campaign as WebCampaign, CampaignRelationship
 from epicteller.web.model.character import Character as WebCharacter
@@ -26,6 +28,9 @@ async def batch_fetch_campaign(campaigns: Dict[int, CoreCampaign], login_id: int
     web_owner_map = await member_fetcher.batch_fetch_members(core_owner_map)
     room_ids = {c.room_id for c in campaigns.values()}
     rooms = await room_ctl.batch_get_room(list(room_ids))
+    running_combats = await asyncio.gather(*[combat_ctl.get_room_running_combat(room) for room in rooms.values()])
+    running_combats_map = {c.room_id: c for c in running_combats if c}
+    running_web_combats_map = await combat_fetcher.batch_fetch_combats(running_combats_map)
 
     campaign_ids = [cid for cid in campaigns.keys()]
     campaign_character_ids = await asyncio.gather(*[character_ctl.get_character_ids_by_campaign(cid)
@@ -33,7 +38,7 @@ async def batch_fetch_campaign(campaigns: Dict[int, CoreCampaign], login_id: int
     campaign_character_ids_map = {cid: character_ids
                                   for cid, character_ids in zip(campaign_ids, campaign_character_ids)}
     character_map = await character_ctl.batch_get_character(list(set(itertools.chain(*campaign_character_ids))))
-    web_character_map = await character_fetcher.batch_fetch_character(character_map)
+    web_character_map = await character_fetcher.batch_fetch_character(character_map, login_id)
     campaign_characters_map: Dict[int, List[WebCharacter]] = {
         campaign_id: [web_character_map.get(character_id)
                       for character_id in campaign_character_ids_map.get(campaign_id, [])]
@@ -46,6 +51,7 @@ async def batch_fetch_campaign(campaigns: Dict[int, CoreCampaign], login_id: int
             continue
         room = rooms.get(c.room_id)
         characters = campaign_characters_map.get(cid, [])
+        running_combat = running_web_combats_map.get(c.room_id)
         result = WebCampaign(
             id=c.url_token,
             room_id=room.url_token if room else None,
@@ -56,9 +62,10 @@ async def batch_fetch_campaign(campaigns: Dict[int, CoreCampaign], login_id: int
             created=c.created,
             updated=c.updated,
             characters=characters,
+            running_combat=running_combat,
         )
         if login_id:
-            relationship = CampaignRelationship(is_gm=login_id == c.owner_id)
+            relationship = CampaignRelationship(is_gm=login_id == c.owner_id, is_owner=login_id == c.owner_id)
             if my_characters := [c for c in character_map.values()
                                  if c.member_id == login_id and c.id in campaign_character_ids_map.get(cid, [])]:
                 character = web_character_map.get(my_characters[-1].id)

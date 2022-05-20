@@ -8,6 +8,7 @@ from epicteller.core.dao.character import CharacterCampaignDAO, CharacterDAO
 from epicteller.core.dao.room import RoomDAO
 from epicteller.core.model.campaign import Campaign
 from epicteller.core.model.room import Room
+from epicteller.core.tables import table
 from epicteller.core.util.enum import CampaignState
 
 
@@ -58,14 +59,20 @@ async def get_participated_campaigns(member_id: int) -> List[Campaign]:
     return campaigns
 
 
-async def active_campaign(campaign: Campaign):
-    await CampaignDAO.update_campaign(campaign.id, state=int(CampaignState.ACTIVE))
-    await RoomDAO.update_room(campaign.room_id, current_campaign_id=campaign.id)
+async def active_campaign(campaign: Campaign) -> Campaign:
+    campaign.state = CampaignState.ACTIVE
+    async with table.db.begin():
+        await CampaignDAO.update_campaign(campaign.id, state=int(CampaignState.ACTIVE))
+        await RoomDAO.update_room(campaign.room_id, current_campaign_id=campaign.id)
+    return campaign
 
 
-async def archive_campaign(campaign: Campaign):
-    await CampaignDAO.update_campaign(campaign.id, state=int(CampaignState.ARCHIVED))
-    await RoomDAO.update_room(campaign.room_id, current_campaign_id=0)
+async def archive_campaign(campaign: Campaign) -> Campaign:
+    campaign.state = CampaignState.ARCHIVED
+    async with table.db.begin():
+        await CampaignDAO.update_campaign(campaign.id, state=int(CampaignState.ARCHIVED))
+        await RoomDAO.update_room(campaign.room_id, current_campaign_id=0)
+    return campaign
 
 
 async def create_campaign(owner_id: int, room_id: int, name: str, description: str='') -> Campaign:

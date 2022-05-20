@@ -53,20 +53,22 @@ class DiceDAO:
     
     @classmethod
     async def batch_get_dice_by_id(cls, dice_ids: Iterable[int]) -> Dict[int, Dice]:
-        query = cls.select_clause.where(cls.t.c.id.in_(dice_ids))
+        query = cls.select_clause.where(cls.t.c.id.in_(list(set(dice_ids))))
         res = await table.execute(query)
         rows = res.fetchall()
         return {row.id: _format_dice(row) for row in rows}
 
     @classmethod
     async def batch_get_dice_by_url_token(cls, url_tokens: Iterable[str]) -> Dict[str, Dice]:
-        query = cls.select_clause.where(cls.t.c.url_token.in_(url_tokens))
+        query = cls.select_clause.where(cls.t.c.url_token.in_(list(set(url_tokens))))
         res = await table.execute(query)
         rows = res.fetchall()
         return {row.url_token: _format_dice(row) for row in rows}
 
     @classmethod
     async def update_dice(cls, dice_id: int, **kwargs) -> None:
+        if len(kwargs) == 0:
+            return
         query = cls.t.update().values(kwargs).where(cls.t.c.id == dice_id)
         await table.execute(query)
 

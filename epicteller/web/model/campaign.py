@@ -5,11 +5,13 @@ from typing import Optional, List
 from pydantic import BaseModel
 
 from epicteller.web.model.character import Character
+from epicteller.web.model.combat import Combat
 from epicteller.web.model.episode import Episode
 from epicteller.web.model.member import Member
 
 
 class CampaignRelationship(BaseModel):
+    is_owner: bool = False
     is_gm: bool = False
     is_player: bool = False
     using_character: Optional[Character]
@@ -28,3 +30,10 @@ class Campaign(BaseModel):
     updated: int
     characters: Optional[List[Character]]
     relationship: Optional[CampaignRelationship]
+    running_combat: Optional[Combat]
+
+
+class CreateCampaignParam(BaseModel):
+    name: str
+    description: Optional[str] = ''
+    room_id: str

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class Episode(BaseModel):
@@ -16,3 +16,7 @@ class Episode(BaseModel):
     ended_at: Optional[int]
     created: int
     updated: int
+
+
+class UpdateEpisode(BaseModel):
+    title: Optional[str] = Field(None, min_length=1, max_length=20)

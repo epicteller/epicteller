@@ -4,7 +4,9 @@ import time
 from typing import Optional, Iterable, Dict, Union, Tuple, List
 
 from epicteller.core import error, kafka
+from epicteller.core.controller import episode as episode_ctl
 from epicteller.core.dao.combat import CombatDAO, RoomRunningCombatDAO
+from epicteller.core.dao.room import RoomRunningEpisodeDAO
 from epicteller.core.model.combat import Combat, CombatToken
 from epicteller.core.model.kafka_msg import combat as combat_msg
 from epicteller.core.model.room import Room
@@ -41,8 +43,13 @@ async def start_new_combat(room: Room) -> Combat:
     running_combat_id = await RoomRunningCombatDAO.get_running_combat_id(room.id)
     if running_combat_id:
         raise error.combat.CombatRunningError()
+    running_episode_id = await RoomRunningEpisodeDAO.get_running_episode_id(room.id)
+    if not running_episode_id:
+        raise error.episode.EpisodeNotRunningError()
+    episode = await episode_ctl.get_episode(running_episode_id)
+    campaign_id = episode.campaign_id
     async with table.db.begin():
-        combat = await CombatDAO.create_combat(room.id)
+        combat = await CombatDAO.create_combat(room.id, campaign_id)
         await RoomRunningCombatDAO.set_running_combat(room.id, combat.id)
     await kafka.publish(combat_msg.MsgCombatCreate(combat_id=combat.id))
     return combat
@@ -53,6 +60,7 @@ async def end_combat(combat: Combat):
         raise error.combat.CombatEndedError()
     running_combat_id = await RoomRunningCombatDAO.get_running_combat_id(combat.room_id)
     async with table.db.begin():
+        combat.state = CombatState.ENDED
         await CombatDAO.update_combat(combat.id,
                                       state=int(CombatState.ENDED),
                                       ended_at=int(time.time()))
@@ -70,6 +78,7 @@ async def run_combat(combat: Combat):
         raise error.combat.CombatOrderEmptyError()
     combat.order.current_token_name = combat.order.order_list[0]
     combat.order.round_count = 1
+    combat.state = CombatState.RUNNING
     await CombatDAO.update_combat(combat.id, order=combat.order.dict(), state=int(CombatState.RUNNING))
     await kafka.publish(combat_msg.MsgCombatRun(combat_id=combat.id))
 

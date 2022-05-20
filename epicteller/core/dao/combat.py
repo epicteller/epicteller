@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import time
-from typing import Iterable, Dict, Optional
+from operator import and_
+from typing import Iterable, Dict, Optional, List
 
 import base62
 from sqlalchemy import select
@@ -21,6 +22,7 @@ def _format_combat(result) -> Optional[Combat]:
         id=result.id,
         url_token=result.url_token,
         room_id=result.room_id,
+        campaign_id=result.campaign_id,
         state=CombatState(result.state),
         is_removed=bool(result.is_removed),
         tokens={name: CombatToken.parse_obj(token) for name, token in result.tokens.items()},
@@ -41,6 +43,7 @@ class CombatDAO:
         t.c.id,
         t.c.url_token,
         t.c.room_id,
+        t.c.campaign_id,
         t.c.state,
         t.c.is_removed,
         t.c.tokens,
@@ -54,32 +57,47 @@ class CombatDAO:
 
     @classmethod
     async def batch_get_combat_by_id(cls, combat_ids: Iterable[int]) -> Dict[int, Combat]:
-        query = cls.select_clause.where(cls.t.c.id.in_(combat_ids))
+        query = cls.select_clause.where(cls.t.c.id.in_(list(set(combat_ids))))
         result = await table.execute(query)
         rows = await result.fetchall()
         return {row.id: _format_combat(row) for row in rows}
 
     @classmethod
     async def batch_get_combat_by_url_token(cls, url_tokens: Iterable[str]) -> Dict[str, Combat]:
-        query = cls.select_clause.where(cls.t.c.url_token.in_(url_tokens))
+        query = cls.select_clause.where(cls.t.c.url_token.in_(list(set(url_tokens))))
         result = await table.execute(query)
         rows = await result.fetchall()
         return {row.url_token: _format_combat(row) for row in rows}
 
     @classmethod
+    async def get_combat_ids_by_campaign(cls, campaign_id: int) -> List[int]:
+        query = select([cls.t.c.id]).where(
+            and_(
+                cls.t.c.campaign_id == campaign_id,
+                cls.t.c.is_removed == 0,
+            ),
+        ).order_by(cls.t.c.id)
+        results = await table.execute(query)
+        rows = await results.fetchall()
+        return [row.id for row in rows]
+
+    @classmethod
     async def update_combat(cls, combat_id: int, **kwargs) -> None:
+        if len(kwargs) == 0:
+            return
         if 'updated' not in kwargs:
             kwargs['updated'] = int(time.time())
         query = cls.t.update().values(kwargs).where(cls.t.c.id == combat_id)
         await table.execute(query)
 
     @classmethod
-    async def create_combat(cls, room_id: int) -> Combat:
+    async def create_combat(cls, room_id: int, campaign_id: int) -> Combat:
         created = int(time.time())
         url_token = base62.encode(get_id())
         values = ObjectDict(
             url_token=url_token,
             room_id=room_id,
+            campaign_id=campaign_id,
             state=int(CombatState.INITIATING),
             is_removed=0,
             tokens={},

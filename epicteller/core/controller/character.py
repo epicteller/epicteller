@@ -77,6 +77,10 @@ async def bind_character_campaign(character: Character, campaign: Campaign):
     await CharacterCampaignDAO.bind_character_to_campaign(character.id, character.name, campaign.id)
 
 
+async def update_character(character: Character, **kwargs):
+    await CharacterDAO.update_character(character.id, **kwargs)
+
+
 async def create_character(name: str, member: Optional[Member]=None,
                            avatar: str='', description: str='') -> Character:
     member_id = member.id if member else 0
