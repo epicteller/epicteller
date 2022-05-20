@@ -18,7 +18,7 @@ app = FastAPI()
 
 cors_options = dict(
     allow_origin_regex=r'.*' if Config.DEBUG else r'https?://.*\.epicteller\.com',
-    allow_origins='*' if Config.DEBUG else None,
+    allow_origins='*' if Config.DEBUG else [],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
