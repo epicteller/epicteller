@@ -24,6 +24,7 @@ class Combat(BaseModel):
     id: str
     type: str = 'combat'
     room: Room
+    campaign_id: Optional[str]
     state: str
     is_removed: bool
     tokens: Dict[str, CombatToken]

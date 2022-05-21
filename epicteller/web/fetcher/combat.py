@@ -4,6 +4,7 @@ import itertools
 from typing import Dict, Optional
 
 from epicteller.core.controller import character as character_ctl
+from epicteller.core.controller import campaign as campaign_ctl
 from epicteller.core.controller import room as room_ctl
 from epicteller.core.model.combat import Combat as CoreCombat, CombatToken as CoreCombatToken
 from epicteller.web.fetcher import character as character_fetcher
@@ -20,6 +21,8 @@ async def fetch_combat(combat: CoreCombat) -> Optional[WebCombat]:
 async def batch_fetch_combats(combats: Dict[int, CoreCombat]) -> Dict[int, WebCombat]:
     room_ids = list({c.room_id for c in combats.values()})
     rooms = await room_ctl.batch_get_room(room_ids)
+    campaign_ids = list({c.campaign_id for c in combats.values()})
+    campaign_map = await campaign_ctl.batch_get_campaign(campaign_ids)
     web_rooms = await room_fetcher.batch_fetch_room(rooms)
     tokens = [combat.tokens.values() for combat in combats.values()]
     tokens = list(itertools.chain(*tokens))
@@ -35,9 +38,14 @@ async def batch_fetch_combats(combats: Dict[int, CoreCombat]) -> Dict[int, WebCo
             initiative=token.initiative,
             character=web_characters.get(token.character_id)
         ) for token in c.tokens.values()}
+        campaign = campaign_map.get(c.campaign_id)
+        campaign_url_token: Optional[str] = None
+        if campaign:
+            campaign_url_token = campaign.url_token
         result = WebCombat(
             id=c.url_token,
             room=web_rooms.get(c.room_id),
+            campaign_id=campaign_url_token,
             state=c.state.name.lower(),
             is_removed=c.is_removed,
             tokens=web_tokens,
