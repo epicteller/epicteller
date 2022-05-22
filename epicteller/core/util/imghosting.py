@@ -35,12 +35,20 @@ async def download_image(url: str) -> bytes:
         return r.content
 
 
+async def get_image_size(*, token: str = None, data: bytes = None) -> Tuple[int, int]:
+    if not token and not data:
+        raise ValueError
+    if token:
+        data = await download_image(get_full_url(token, size='r'))
+    img = Image.open(io.BytesIO(data))
+    return img.size
+
+
 async def upload_image(image_data: bytes) -> Tuple[str, int, int]:
     image_type = imghdr.what('', h=image_data)
     if image_type not in {'gif', 'jpeg', 'bmp', 'png', 'webp'}:
         raise TypeError
-    img: Image.Image = Image.open(io.BytesIO(image_data))
-    width, height = img.size
+    width, height = await get_image_size(data=image_data)
     mime_type = f"image/{image_type}"
     m = hashlib.md5()
     m.update(image_data)
@@ -55,7 +63,7 @@ async def upload_image(image_data: bytes) -> Tuple[str, int, int]:
     }
     target_url = get_presigned_url(image_token, headers)
     async with httpx.AsyncClient() as http_client:
-        r = await http_client.put(target_url, data=image_data, headers=headers)
+        r = await http_client.put(target_url, content=image_data, headers=headers)
         r.raise_for_status()
     return image_token, width, height
 

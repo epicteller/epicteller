@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from nonebot.adapters.cqhttp import escape
+from nonebot.adapters.onebot.v11 import escape
 
 from epicteller.core.controller import character as character_ctl
 from epicteller.core.model.combat import CombatToken, Combat
-from nonebot.adapters.cqhttp.message import Message, MessageSegment
+from nonebot.adapters.onebot.v11.message import Message, MessageSegment
 
 from epicteller.core.util.enum import ExternalType
 

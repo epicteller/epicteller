@@ -4,8 +4,9 @@ from typing import Type
 
 from lru import LRU
 from nonebot import Bot
-from nonebot.adapters.cqhttp.event import Event, GroupMessageEvent, MessageEvent
+from nonebot.adapters.onebot.v11.event import Event, GroupMessageEvent, MessageEvent
 from nonebot.matcher import Matcher
+from nonebot.typing import T_State
 
 from epicteller.core.controller import campaign as campaign_ctl
 from epicteller.core.controller import character as character_ctl
@@ -18,7 +19,7 @@ from epicteller.core.util.enum import ExternalType
 message_cache = LRU(10000)
 
 
-async def prepare_context(matcher: Type[Matcher], bot: Bot, event: MessageEvent, state: dict) -> bool:
+async def prepare_context(matcher: Type[Matcher], bot: Bot, event: MessageEvent, state: T_State) -> bool:
     if event.get_event_name() != 'message.group.normal':
         return False
     assert isinstance(event, GroupMessageEvent)

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 from typing import Optional
 
-from nonebot.adapters.cqhttp import MessageSegment
+from nonebot.adapters.onebot.v11 import MessageSegment
 from pydantic import BaseModel
 
 from epicteller.core.util import imghosting

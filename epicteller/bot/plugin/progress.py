@@ -4,9 +4,11 @@ import json
 from typing import Type
 
 from nonebot import on_command, Bot
-from nonebot.adapters.cqhttp import Message, MessageSegment, escape
-from nonebot.adapters.cqhttp.event import Event, MessageEvent, GroupMessageEvent
+from nonebot.adapters.onebot.v11 import Message, MessageSegment, escape
+from nonebot.adapters.onebot.v11.event import Event, MessageEvent, GroupMessageEvent
 from nonebot.matcher import Matcher
+from nonebot.params import CommandArg
+from nonebot.typing import T_State
 
 from epicteller.core import error
 from epicteller.core.controller import campaign as campaign_ctl
@@ -19,11 +21,11 @@ from epicteller.core.model.room import Room
 from epicteller.core.util import const
 from epicteller.core.util.enum import ExternalType, EpisodeState
 
-start = on_command('start')
+start = on_command('start', block=True)
 
 
 @start.handle()
-async def _(bot: Bot, event: MessageEvent, state: dict):
+async def _(bot: Bot, event: MessageEvent, state: T_State):
     await must_prepare_context(start, bot, event, state)
     room: Room = state.get('room')
     campaign: Campaign = state.get('campaign')
@@ -46,11 +48,11 @@ async def _(bot: Bot, event: MessageEvent, state: dict):
         await start.finish('—— 🎬 继续剧情  🎬 ——')
 
 
-end = on_command('end')
+end = on_command('end', block=True)
 
 
 @end.handle()
-async def _(bot: Bot, event: MessageEvent, state: dict):
+async def _(bot: Bot, event: MessageEvent, state: T_State, args: Message = CommandArg()):
     await must_prepare_context(end, bot, event, state)
     room: Room = state.get('room')
     episode = await episode_ctl.get_room_running_episode(room)
@@ -60,7 +62,7 @@ async def _(bot: Bot, event: MessageEvent, state: dict):
         await end.finish('❌ 章节已经结束了哦。')
     await episode_ctl.end_episode(episode)
     await end.send('—— 💤 章节结束 💤 ——')
-    possible_title = await extract_title(event.message)
+    possible_title = args.extract_plain_text()
     if possible_title or episode.title != const.DEFAULT_EPISODE_TITLE:
         title = possible_title or episode.title
         if possible_title:
@@ -72,15 +74,10 @@ async def _(bot: Bot, event: MessageEvent, state: dict):
                        f"💡 在结束章节时，使用命令「{event.raw_message.strip()[0]}end 章节名」可直接以指定的章节名保存。")
 
 
-async def extract_title(message: Message):
-    message = Message([seg for seg in message if seg.type == 'text'])
-    return str(message)
-
-
 @end.receive()
-async def process_title(bot: Bot, event: MessageEvent, state: dict):
+async def process_title(bot: Bot, event: MessageEvent, state: T_State):
     episode: Episode = state.get('episode')
-    possible_title = await extract_title(event.message)
+    possible_title = event.message.extract_plain_text()
     if not possible_title:
         await end.finish(f"✔️看起来你暂时还没有想好合适的标题，章节暂时以「{episode.title}」为名保存。\n"
                          f"如果之后有了合适的想法，也可以在网站上直接修改标题。")
@@ -90,11 +87,11 @@ async def process_title(bot: Bot, event: MessageEvent, state: dict):
                          f"如果之后还有更好的想法，也可以在网站上继续修改标题。")
 
 
-pause = on_command('pause', aliases={'save'})
+pause = on_command('pause', aliases={'save'}, block=True)
 
 
 @pause.handle()
-async def _(bot: Bot, event: MessageEvent, state: dict):
+async def _(bot: Bot, event: MessageEvent, state: T_State):
     await must_prepare_context(pause, bot, event, state)
     room: Room = state.get('room')
     campaign: Campaign = state.get('campaign')
@@ -105,7 +102,7 @@ async def _(bot: Bot, event: MessageEvent, state: dict):
     await pause.send('—— 💾 保存进度 💾 ——')
 
 
-async def must_prepare_context(matcher: Type[Matcher], bot: Bot, event: MessageEvent, state: dict):
+async def must_prepare_context(matcher: Type[Matcher], bot: Bot, event: MessageEvent, state: T_State):
     if event.message_type != 'group':
         await matcher.finish('🚫 这个指令只能在群聊中使用。')
     assert isinstance(event, GroupMessageEvent)

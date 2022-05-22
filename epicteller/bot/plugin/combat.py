@@ -5,10 +5,11 @@ import time
 from typing import Type, Optional
 
 from nonebot import on_command, Bot, on_message
-from nonebot.adapters.cqhttp import permission, Message, MessageSegment
-from nonebot.adapters.cqhttp.event import MessageEvent
+from nonebot.adapters.onebot.v11 import permission, Message, MessageSegment
+from nonebot.adapters.onebot.v11.event import MessageEvent
 from nonebot.matcher import Matcher
 from nonebot.rule import regex
+from nonebot.typing import T_State
 
 from epicteller.bot.controller import combat as combat_bot_ctl
 from epicteller.bot.controller.base import prepare_context
@@ -19,11 +20,11 @@ from epicteller.core.model.combat import Combat
 from epicteller.core.model.room import Room
 from epicteller.core.util.enum import CombatState
 
-combat_cmd = on_command('combat', permission=permission.GROUP)
+combat_cmd = on_command('combat', permission=permission.GROUP, block=True)
 
 
 @combat_cmd.handle()
-async def _(bot: Bot, event: MessageEvent, state: dict):
+async def _(bot: Bot, event: MessageEvent, state: T_State):
     await prepare_combat_context(combat_cmd, bot, event, state)
     arg = str(event.get_message()).strip()
     if arg == '':
@@ -38,7 +39,7 @@ async def _(bot: Bot, event: MessageEvent, state: dict):
         await combat_end(bot, event, state)
 
 
-async def combat_status(bot: Bot, event: MessageEvent, state: dict):
+async def combat_status(bot: Bot, event: MessageEvent, state: T_State):
     combat: Combat = state['combat']
     if not combat or combat.state == CombatState.ENDED:
         await combat_cmd.finish(f'战斗轮指示器未激活。\n'
@@ -63,7 +64,7 @@ async def combat_status(bot: Bot, event: MessageEvent, state: dict):
     await combat_cmd.finish(message)
 
 
-async def combat_start(bot: Bot, event: MessageEvent, state: dict):
+async def combat_start(bot: Bot, event: MessageEvent, state: T_State):
     room: Room = state['room']
     try:
         combat = await combat_ctl.start_new_combat(room)
@@ -77,7 +78,7 @@ async def combat_start(bot: Bot, event: MessageEvent, state: dict):
                             f'- 使用指令「{event.raw_message.strip()[0]}combat run」进入行动阶段。')
 
 
-async def combat_run(bot: Bot, event: MessageEvent, state: dict):
+async def combat_run(bot: Bot, event: MessageEvent, state: T_State):
     combat: Combat = state['combat']
     try:
         await combat_ctl.run_combat(combat)
@@ -92,7 +93,7 @@ async def combat_run(bot: Bot, event: MessageEvent, state: dict):
         return
 
 
-async def combat_next(bot: Bot, event: MessageEvent, state: dict):
+async def combat_next(bot: Bot, event: MessageEvent, state: T_State):
     combat: Combat = state['combat']
     try:
         await combat_ctl.next_combat_token(combat)
@@ -104,7 +105,7 @@ async def combat_next(bot: Bot, event: MessageEvent, state: dict):
         return
 
 
-async def combat_end(bot: Bot, event: MessageEvent, state: dict):
+async def combat_end(bot: Bot, event: MessageEvent, state: T_State):
     combat: Combat = state['combat']
     try:
         await combat_ctl.end_combat(combat)
@@ -117,7 +118,7 @@ next_token = on_message(rule=regex(r'^\s*(回合结束|行动结束)\s*$'), perm
 
 
 @next_token.handle()
-async def _(bot: Bot, event: MessageEvent, state: dict):
+async def _(bot: Bot, event: MessageEvent, state: T_State):
     await prepare_combat_context(next_token, bot, event, state)
     combat: Combat = state['combat']
     if not combat or combat.state != CombatState.RUNNING:
@@ -133,7 +134,7 @@ async def _(bot: Bot, event: MessageEvent, state: dict):
     await combat_next(bot, event, state)
 
 
-async def prepare_combat_context(matcher: Type[Matcher], bot: Bot, event: MessageEvent, state: dict):
+async def prepare_combat_context(matcher: Type[Matcher], bot: Bot, event: MessageEvent, state: T_State):
     is_prepared = await prepare_context(combat_cmd, bot, event, state)
     if not is_prepared:
         await matcher.finish()
@@ -144,10 +145,10 @@ async def prepare_combat_context(matcher: Type[Matcher], bot: Bot, event: Messag
 
 
 # DEPRECATED
-battlestart = on_command('battlestart')
+battlestart = on_command('battlestart', block=True)
 
 
 @battlestart.handle()
-async def _(bot: Bot, event: MessageEvent, state: dict):
+async def _(bot: Bot, event: MessageEvent, state: T_State):
     await battlestart.finish(f'「battlestart」指令已弃用。\n'
                              f'- 使用指令「{event.raw_message.strip()[0]}combat」切换到新的战斗轮指示器。')

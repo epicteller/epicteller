@@ -3,9 +3,10 @@
 import re
 
 from nonebot import on_message, on_notice, Bot, on_command
-from nonebot.adapters.cqhttp import MessageSegment, Message, permission
-from nonebot.adapters.cqhttp.event import MessageEvent, GroupRecallNoticeEvent
+from nonebot.adapters.onebot.v11 import MessageSegment, Message, permission
+from nonebot.adapters.onebot.v11.event import Event, MessageEvent, GroupRecallNoticeEvent
 from nonebot.rule import regex
+from nonebot.typing import T_State
 
 from epicteller.bot.controller import base
 from epicteller.core.controller import message as message_ctl
@@ -24,7 +25,7 @@ say = on_message(rule=regex(VALID_MESSAGE_REGEX_PATTERN), permission=permission.
 
 
 @say.handle()
-async def _(bot: Bot, event: MessageEvent, state: dict):
+async def _(bot: Bot, event: MessageEvent, state: T_State):
     await prepare(bot, event, state)
     episode: Episode = state.get('episode')
     character: Character = state.get('character')
@@ -37,7 +38,7 @@ async def _(bot: Bot, event: MessageEvent, state: dict):
     base.message_cache[internal_message_id] = message.id
 
 
-async def prepare(bot: Bot, event: MessageEvent, state: dict):
+async def prepare(bot: Bot, event: MessageEvent, state: T_State):
     msg_text = event.get_plaintext().strip().replace('\r\n', '\n')
     if msg_text and VALID_MESSAGE_REGEX.search(msg_text):
         message_type = MessageType.TEXT
@@ -53,11 +54,11 @@ async def prepare(bot: Bot, event: MessageEvent, state: dict):
     state['content'] = content
 
 
-image = on_command('image', aliases={'i'}, permission=permission.GROUP)
+image = on_command('image', aliases={'i'}, permission=permission.GROUP, block=True)
 
 
 @image.handle()
-async def _(bot: Bot, event: MessageEvent, state: dict):
+async def _(bot: Bot, event: MessageEvent, state: T_State):
     is_prepared = await base.prepare_context(say, bot, event, state)
     if not is_prepared:
         await say.finish()
@@ -70,7 +71,10 @@ async def _(bot: Bot, event: MessageEvent, state: dict):
     if not msg_images:
         await say.finish('🤔 需要上传一张图片哦。')
         return
-    image_origin_url = msg_images[0]['data']['url']
+    image_origin_url = msg_images[0].get('data', {}).get('url')
+    if not image_origin_url:
+        await say.finish('🤔 需要上传一张图片哦。')
+        return
     image_token, width, height = await imghosting.upload_image_from_url(image_origin_url)
     content = ImageMessageContent(image=image_token, width=width, height=height)
     message = await message_ctl.create_message(episode, character, MessageType.IMAGE, content, is_gm)
@@ -78,11 +82,15 @@ async def _(bot: Bot, event: MessageEvent, state: dict):
     base.message_cache[internal_message_id] = message.id
 
 
-rollback = on_notice(lambda b, e, d: e.notice_type == 'group_recall')
+async def recall_checker(e: Event) -> bool:
+    return isinstance(e, GroupRecallNoticeEvent)
+
+
+rollback = on_notice(recall_checker)
 
 
 @rollback.handle()
-async def _(bot: Bot, event: GroupRecallNoticeEvent, state: dict):
+async def _(bot: Bot, event: GroupRecallNoticeEvent, state: T_State):
     room_external_id = str(event.group_id)
     room = await room_ctl.get_room_by_external(ExternalType.QQ, room_external_id)
     if not room:

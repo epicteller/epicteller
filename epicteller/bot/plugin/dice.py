@@ -2,14 +2,15 @@
 # -*- coding: utf-8 -*-
 from typing import Iterable, Optional
 
-from nonebot.adapters.cqhttp import MessageSegment, permission, Message
-from nonebot.adapters.cqhttp.event import Event, MessageEvent, GroupMessageEvent
+from nonebot.adapters.onebot.v11 import MessageSegment, permission, Message
+from nonebot.adapters.onebot.v11.event import Event, MessageEvent, GroupMessageEvent
 from datum import error as datum_error
 from datum.base import Result
 from lark import LarkError, UnexpectedCharacters, UnexpectedToken
 from nonebot import on_message, on_command
-from nonebot.adapters.cqhttp import Bot
+from nonebot.adapters.onebot.v11 import Bot
 from nonebot.rule import regex
+from nonebot.typing import T_State
 
 from epicteller.bot.controller import base
 from epicteller.core import error
@@ -28,7 +29,7 @@ dice = on_message(rule=regex(r'^[#＃:：]|^(\.r)'))
 
 
 @dice.handle()
-async def _(bot: Bot, event: MessageEvent, state: dict):
+async def _(bot: Bot, event: MessageEvent, state: T_State):
     await prepare(bot, event, state)
     is_prepared = await base.prepare_context(dice, bot, event, state)
     result, reason = await must_get_dice_result(bot, event, state)
@@ -91,7 +92,7 @@ def get_operator_name(event: MessageEvent):
         return '你'
 
 
-async def prepare(bot: Bot, event: MessageEvent, state: dict):
+async def prepare(bot: Bot, event: MessageEvent, state: T_State):
     if event.get_event_name() == 'message.group.anonymous':
         assert isinstance(event, GroupMessageEvent)
         await dice.finish((f"化身为「{event.anonymous.name}」的无名鼠辈啊……"
@@ -105,7 +106,7 @@ async def prepare(bot: Bot, event: MessageEvent, state: dict):
         state['reason'] = args[1]
 
 
-async def must_get_dice_result(bot: Bot, event: MessageEvent, state: dict) -> (Result, Optional[str]):
+async def must_get_dice_result(bot: Bot, event: MessageEvent, state: T_State) -> (Result, Optional[str]):
     result: Optional[Result] = None
     reason: Optional[str] = state.get('reason')
     errmsg: Optional[str] = None
@@ -157,11 +158,11 @@ async def must_get_dice_result(bot: Bot, event: MessageEvent, state: dict) -> (R
     return result, reason
 
 
-refresh = on_command('refresh', permission=permission.PRIVATE_FRIEND)
+refresh = on_command('refresh', permission=permission.PRIVATE_FRIEND, block=True)
 
 
 @refresh.handle()
-async def _(bot: Bot, event: MessageEvent, state: dict):
+async def _(bot: Bot, event: MessageEvent, state: T_State):
     seed = str(event.get_message()).strip().encode('utf8')
     if not seed:
         seed = None
@@ -169,10 +170,10 @@ async def _(bot: Bot, event: MessageEvent, state: dict):
     await refresh.finish(str(Config.RUNTIME_ID))
 
 
-predict = on_command('p', permission=permission.PRIVATE_FRIEND)
+predict = on_command('p', permission=permission.PRIVATE_FRIEND, block=True)
 
 
 @predict.handle()
-async def _(bot: Bot, event: Event, state: dict):
+async def _(bot: Bot, event: Event, state: T_State):
     await dice_ctl.update_memory_dump()
     await predict.finish(str(Config.RUNTIME_ID))

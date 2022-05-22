@@ -4,8 +4,8 @@ from dataclasses import dataclass
 from typing import Optional, List, Tuple
 
 import nonebot
-from nonebot.adapters.cqhttp import Bot, MessageSegment
-from nonebot.adapters.cqhttp import Message
+from nonebot.adapters.onebot.v11 import Bot, MessageSegment
+from nonebot.adapters.onebot.v11 import Message
 
 from epicteller.bot import bus
 from epicteller.bot.controller import combat as combat_bot_ctl
@@ -29,8 +29,7 @@ class CombatContext:
 
     async def send(self, message: Message):
         group_id = int(self.room_external_id)
-        self_id = int(self.bot_id)
-        await self.bot.send_group_msg(group_id=group_id, message=message, self_id=self_id)
+        await self.bot.send_group_msg(group_id=group_id, message=message)
 
 
 async def prepare_context(msg: MsgCombat) -> Optional[CombatContext]:
