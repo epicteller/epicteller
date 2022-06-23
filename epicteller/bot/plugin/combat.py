@@ -8,6 +8,7 @@ from nonebot import on_command, Bot, on_message
 from nonebot.adapters.onebot.v11 import permission, Message, MessageSegment
 from nonebot.adapters.onebot.v11.event import MessageEvent
 from nonebot.matcher import Matcher
+from nonebot.params import CommandArg
 from nonebot.rule import regex
 from nonebot.typing import T_State
 
