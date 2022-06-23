@@ -24,9 +24,9 @@ combat_cmd = on_command('combat', permission=permission.GROUP, block=True)
 
 
 @combat_cmd.handle()
-async def _(bot: Bot, event: MessageEvent, state: T_State):
+async def _(bot: Bot, event: MessageEvent, state: T_State, args: Message = CommandArg()):
     await prepare_combat_context(combat_cmd, bot, event, state)
-    arg = str(event.get_message()).strip()
+    arg = args.extract_plain_text()
     if arg == '':
         await combat_status(bot, event, state)
     elif arg == 'start':
