@@ -1,5 +1,5 @@
 # ==================================== BASE ====================================
-ARG INSTALL_PYTHON_VERSION=${INSTALL_PYTHON_VERSION:-3.9}
+ARG INSTALL_PYTHON_VERSION=${INSTALL_PYTHON_VERSION:-3.10}
 FROM python:${INSTALL_PYTHON_VERSION}-slim AS base
 
 WORKDIR /app

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from typing import Optional
+from typing import Optional, Iterable
 
 from nonebot.adapters.onebot.v11 import MessageSegment
 from pydantic import BaseModel
@@ -41,6 +41,8 @@ class DiceMessageContent(MessageContent):
 
     def __post_init__(self):
         self.dice_type = DiceType(self.dice_type)
+        if isinstance(self.value, Iterable):
+            self.value = tuple(self.value)
 
     def to_message(self):
         reason: str = ''
