@@ -46,8 +46,6 @@ async def combat_status(bot: Bot, event: MessageEvent, state: T_State):
         await combat_cmd.finish(f'战斗轮指示器未激活。\n'
                                 f'- 使用指令「{event.raw_message.strip()[0]}combat start」开启一场新战斗。')
         return
-    # await combat_cmd.send(Message(MessageSegment.xml(await combat_bot_ctl.format_combat_xml(combat))))
-    await combat_cmd.send(MessageSegment.share(f'https://www.epicteller.com/combat/{combat.url_token}'))
     if combat.state == CombatState.INITIATING:
         if len(combat.order.order_list) == 0:
             status_msg = '还没有人进入先攻顺位。'
@@ -72,7 +70,6 @@ async def combat_start(bot: Bot, event: MessageEvent, state: T_State):
     except error.combat.CombatRunningError:
         await combat_cmd.finish('❌ 当前战斗还在进行中。')
         return
-    await combat_cmd.send(MessageSegment.share(f'https://www.epicteller.com/combat/{combat.url_token}'))
     await combat_cmd.finish(f'进入先攻阶段，战斗轮指示器已激活。\n'
                             f'投掷先攻骰来决定先攻顺序。\n'
                             f'- 在战斗的任意时刻，使用指令「{event.raw_message.strip()[0]}combat」检查战斗状态。\n'
