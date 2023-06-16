@@ -199,29 +199,6 @@ optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
 [[package]]
-name = "cos-python-sdk-v5"
-version = "1.9.4"
-description = "cos-python-sdk-v5"
-category = "main"
-optional = false
-python-versions = "*"
-
-[package.dependencies]
-crcmod = "*"
-dicttoxml = "*"
-pycryptodome = "*"
-requests = ">=2.8"
-six = "*"
-
-[[package]]
-name = "crcmod"
-version = "1.7"
-description = "CRC Generator"
-category = "main"
-optional = false
-python-versions = "*"
-
-[[package]]
 name = "cryptography"
 version = "3.4.6"
 description = "cryptography is a package which provides cryptographic recipes and primitives to Python developers."
@@ -264,14 +241,6 @@ description = "Decorators for Humans"
 category = "main"
 optional = false
 python-versions = ">=2.6, !=3.0.*, !=3.1.*"
-
-[[package]]
-name = "dicttoxml"
-version = "1.7.4"
-description = "Converts a Python dictionary or other native data type into a valid XML string."
-category = "main"
-optional = false
-python-versions = "*"
 
 [[package]]
 name = "dnspython"
@@ -952,14 +921,6 @@ optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 
 [[package]]
-name = "pycryptodome"
-version = "3.10.1"
-description = "Cryptographic library for Python"
-category = "main"
-optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
-
-[[package]]
 name = "pydantic"
 version = "1.9.1"
 description = "Data validation and settings management using python type hints"
@@ -1530,7 +1491,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "329dbe849257d33dbdc7b03681695100860fe763a1f3a0553443d1d240e3fe18"
+content-hash = "a2620299d01fd8e0de3852f748626962fa71883ea6fa05c58e5f9087a0906b8f"
 
 [metadata.files]
 aiokafka = []
@@ -1551,12 +1512,9 @@ cffi = []
 charset-normalizer = []
 click = []
 colorama = []
-cos-python-sdk-v5 = []
-crcmod = []
 cryptography = []
 dataclasses-json = []
 decorator = []
-dicttoxml = []
 dnspython = []
 ecdsa = []
 email-validator = []
@@ -1614,7 +1572,6 @@ pyasn1 = []
 pybase62 = []
 pycodestyle = []
 pycparser = []
-pycryptodome = []
 pydantic = []
 pydocstyle = []
 pyflakes = []

@@ -20,7 +20,6 @@ pybase62 = "*"
 aiokafka = "*"
 bcrypt = "*"
 httpx = "*"
-cos-python-sdk-v5 = "*"
 pillow = ">=8.1.1"
 fastapi = "*"
 uvicorn = {extras = ["standard"], version = "*"}

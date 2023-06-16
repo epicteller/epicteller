@@ -33,11 +33,10 @@ class Config:
     # Kafka
     KAFKA_SERVERS = os.getenv('EPICTELLER_KAFKA_SERVERS', '').split(',')
 
-    # Tencent Cloud COS Keys
-    COS_SECRET_ID = os.getenv('COS_SECRET_ID')
-    COS_SECRET_KEY = os.getenv('COS_SECRET_KEY')
-    COS_REGION = os.getenv('COS_REGION')
-    COS_IMAGE_BUCKET = os.getenv('COS_IMAGE_BUCKET')
+    # Cloudflare Images
+    CF_IMAGES_ACCOUNT_HASH = os.getenv('CF_IMAGES_ACCOUNT_HASH')
+    CF_IMAGES_ACCOUNT_ID = os.getenv('CF_IMAGES_ACCOUNT_ID')
+    CF_IMAGES_API_KEY = os.getenv('CF_IMAGES_API_KEY')
 
     REQUEST_TIMEOUT = 600
     RESPONSE_TIMEOUT = 600
