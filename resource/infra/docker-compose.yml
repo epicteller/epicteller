@@ -38,24 +38,9 @@ services:
     depends_on:
       - zoo1
   redis1:
-    image: redis:5.0.5
-    container_name: redis
+    image: redis/redis-stack-server:latest
+    hostname: redis1
+    container_name: redis1
     restart: always
-    hostname: redis
-    network_mode: bridge
     ports:
       - "6379:6379"
-    command: >
-      # Require clients to issue AUTH <PASSWORD> before processing any other commands.
-      --requirepass changeme
-
-      # By default, if no "bind" configuration directive is specified, Redis listens for connections from all the
-      # network interfaces available on the server.
-      --bind 0.0.0.0
-      # Accept connections on the specified port, default is 6379 (IANA #815344).
-      --port 6379
-      # Set the max number of connected clients at the same time.
-      #--maxclients 10000
-
-      # Protected mode is a layer of security protection. By default protected mode is enabled.
-      --protected-mode yes
