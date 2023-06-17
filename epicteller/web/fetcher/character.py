@@ -28,6 +28,7 @@ async def batch_fetch_character(characters: Dict[int, CoreCharacter], login_id: 
             id=c.url_token,
             name=c.name,
             avatar=imghosting.get_avatar_url(c.avatar),
+            avatar_template=imghosting.get_avatar_url(c.avatar, size='{template}'),
             description=c.description,
             member=member_map.get(c.member_id),
             is_removed=c.is_removed or None,

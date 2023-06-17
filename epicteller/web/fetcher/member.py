@@ -25,6 +25,7 @@ async def batch_fetch_members(members: Dict[int, CoreMember]) -> Dict[int, WebMe
             name=m.name,
             headline=m.headline,
             avatar=imghosting.get_avatar_url(m.avatar),
+            avatar_template=imghosting.get_avatar_url(m.avatar, size='{template}'),
             created=m.created,
         )
         results[mid] = result

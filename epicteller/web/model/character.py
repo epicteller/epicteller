@@ -17,6 +17,7 @@ class Character(BaseModel):
     member: Optional[Member]
     name: str
     avatar: str
+    avatar_template: str
     description: str
     is_removed: Optional[bool]
     raw_data: dict

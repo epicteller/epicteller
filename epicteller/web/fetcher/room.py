@@ -32,7 +32,7 @@ async def batch_fetch_room(rooms: Dict[int, CoreRoom]) -> Dict[int, WebRoom]:
             description=r.description,
             owner=owner_map.get(r.owner_id),
             is_removed=r.is_removed,
-            avatar=imghosting.get_avatar_url(r.avatar),
+            avatar=imghosting.get_avatar_url(r.avatar, size='xxl'),
             created=r.created,
             updated=r.updated,
             member_count=count_map.get(r.id),
