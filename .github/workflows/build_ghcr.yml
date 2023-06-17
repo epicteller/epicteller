@@ -42,3 +42,9 @@ jobs:
          push: true
          tags: ${{ steps.meta.outputs.tags }}
          labels: ${{ steps.meta.outputs.labels }}
+
+     - name: Deploy to Portainer
+       uses: fjogeleit/http-request-action@v1
+       with:
+         url: ${{ secrets.DEPLOY_WEBHOOK }}
+         method: POST
