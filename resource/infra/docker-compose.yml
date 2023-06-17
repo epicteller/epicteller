@@ -1,4 +1,4 @@
-version: '3'
+version: '3.9'
 services:
   zoo1:
     image: confluentinc/cp-zookeeper:7.3.2
@@ -20,7 +20,7 @@ services:
     container_name: kafka1
     restart: always
     ports:
-      - "9092:9092"
+      # - "9092:9092"
       - "29092:29092"
       - "9999:9999"
     environment:
@@ -37,6 +37,7 @@ services:
       KAFKA_JMX_HOSTNAME: ${DOCKER_HOST_IP:-127.0.0.1}
       KAFKA_AUTHORIZER_CLASS_NAME: kafka.security.authorizer.AclAuthorizer
       KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: "true"
+      KAFKA_HEAP_OPTS: "-Xmx512M -Xms512M"
     depends_on:
       - zoo1
     deploy:
@@ -51,3 +52,21 @@ services:
       - "6379:6379"
     deploy:
       mode: global
+
+  epicteller-web:
+    image: ghcr.io/epicteller/epicteller:latest
+    ports:
+      - target: 10090
+        published: 10090
+        protocol: tcp
+        mode: ingress
+      - target: 8000
+        published: 8000
+        protocol: tcp
+        mode: ingress
+    depends_on:
+      - kafka1
+      - redis1
+    deploy:
+      mode: replicated
+      replicas: 2

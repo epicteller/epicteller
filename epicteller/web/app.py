@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, APIRouter
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -62,17 +62,26 @@ async def validation_error_handler(request: Request, e: ValidationError):
 app.add_exception_handler(ValidationError, validation_error_handler)
 app.add_exception_handler(RequestValidationError, validation_error_handler)
 
+root_router = APIRouter()
 
-@app.get('/')
+
+@root_router.get('/')
 async def hello():
     return {'message': 'Hello!'}
 
 
-app.include_router(campaign.router)
-app.include_router(character.router)
-app.include_router(combat.router)
-app.include_router(me.router)
-app.include_router(misc.router)
-app.include_router(auth.router)
-app.include_router(episode.router)
-app.include_router(room.router)
+routers = [
+    root_router,
+    campaign.router,
+    character.router,
+    combat.router,
+    me.router,
+    misc.router,
+    auth.router,
+    episode.router,
+    room.router,
+]
+
+for router in routers:
+    app.include_router(router)
+    app.include_router(router, prefix='/api')
