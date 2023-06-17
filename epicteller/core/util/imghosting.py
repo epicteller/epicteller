@@ -50,7 +50,7 @@ async def upload_image(image_data: bytes) -> Tuple[str, int, int]:
 def get_full_url(token: str, size: str='hd') -> str:
     if not token:
         return ''
-    return f"https://www.epicteller.com/cdn-cgi/imagedelivery/{Config.CF_IMAGES_ACCOUNT_HASH}/{token}/{size}"
+    return f"https://img.epicteller.com/cdn-cgi/imagedelivery/{Config.CF_IMAGES_ACCOUNT_HASH}/{token}/{size}"
 
 
 get_avatar_url = functools.partial(get_full_url, size='xl')
