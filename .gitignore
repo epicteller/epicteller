@@ -54,7 +54,8 @@ env/
 
 # Configuration
 .env
-.env.prod
+.env.*
+!.env.example
 
 # Development database
 *.db
