@@ -11,7 +11,7 @@ from epicteller.core import redis
 from epicteller.core.config import Config
 from epicteller.core.error.base import EpictellerError
 from epicteller.web import bus_init
-from epicteller.web.handler import auth, me, combat, episode, campaign, room, misc, character
+from epicteller.web.handler import auth, me, combat, episode, campaign, room, misc, character, predict
 from epicteller.web.middleware.auth import AuthBackend
 
 app = FastAPI()
@@ -80,6 +80,7 @@ routers = [
     auth.router,
     episode.router,
     room.router,
+    predict.router,
 ]
 
 for router in routers:

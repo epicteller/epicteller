@@ -8,9 +8,11 @@ from typing import Optional, Iterable, Dict, Union
 from datum import Parser
 from datum.base import Result
 
+from epicteller.core import error, kafka
 from epicteller.core.config import Config
 from epicteller.core.dao.dice import DiceDAO
 from epicteller.core.model.dice import Dice
+from epicteller.core.model.kafka_msg import dump
 from epicteller.core.util.enum import DiceType
 from epicteller.core.util.typing import DiceValue_T
 
@@ -50,6 +52,27 @@ async def refresh_randomizer(seed: bytes = None):
         seed = secrets.token_bytes(16)
     rand = random.Random(seed)
     await update_memory_dump()
+
+
+async def predict(token: str, face: int=20, start: int=0, end: int=20) -> list[int]:
+    dumped_rand = await DiceDAO.get_memory_dump(token)
+    if not dumped_rand:
+        raise error.base.NotFoundError()
+    r = pickle.loads(dumped_rand)
+    return [r.randint(1, face) for _ in range(end)][start:end]
+
+
+async def rollup(token: str, face: int=20, times: int=1) -> int:
+    dumped_rand = await DiceDAO.get_memory_dump(token)
+    if not dumped_rand:
+        raise error.base.NotFoundError()
+    r = pickle.loads(dumped_rand)
+    for _ in range(times):
+        r.randint(1, face)
+    data = pickle.dumps(r)
+    await DiceDAO.update_memory_dump(token, data)
+    await kafka.publish(dump.MsgReceiveDump(runtime_id=token, dump=data))
+    return sum(r.randint(1, face) for _ in range(times))
 
 
 async def get_dice(dice_id: int=None, *, url_token: str=None) -> Optional[Dice]:
