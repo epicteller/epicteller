@@ -71,7 +71,7 @@ async def rollup(token: str, face: int=20, times: int=1) -> int:
         r.randint(1, face)
     data = pickle.dumps(r)
     await DiceDAO.update_memory_dump(token, data)
-    await kafka.publish(dump.MsgReceiveDump(runtime_id=token, dump=data))
+    await kafka.publish(dump.MsgReceiveDump(runtime_id=token))
     return sum(r.randint(1, face) for _ in range(times))
 
 

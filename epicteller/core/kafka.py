@@ -122,4 +122,4 @@ async def publish(msg: KafkaMsg):
             await _producer.start()
         await _producer.send_and_wait(msg.action, msg.json().encode('utf8'))
     except Exception as e:
-        logger.error(f'Error occurred when publishing kafka message[{msg.action}]:', e)
+        logger.error(f'Error occurred when publishing kafka message[{msg.action}]:', )
