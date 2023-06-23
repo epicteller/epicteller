@@ -29,7 +29,7 @@ class Member(BaseModel):
     name: str
     headline: str
     avatar: str
-    avatar_template: str
+    avatar_template: Optional[str]
     created: int
 
 
