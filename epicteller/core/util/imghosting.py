@@ -41,7 +41,7 @@ async def upload_image(image_data: bytes) -> Tuple[str, int, int]:
             f"https://api.cloudflare.com/client/v4/accounts/{Config.CF_IMAGES_ACCOUNT_ID}/images/v1",
             headers={'Authorization': f'Bearer {Config.CF_IMAGES_API_KEY}'},
             data={'id': image_token},
-            files={image_token: io.BytesIO(image_data)},
+            files={'file': io.BytesIO(image_data)},
         )
         r.raise_for_status()
     return image_token, width, height
