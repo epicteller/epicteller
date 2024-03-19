@@ -4,7 +4,7 @@ from typing import Type
 
 from lru import LRU
 from nonebot import Bot
-from nonebot.adapters.onebot.v11.event import Event, GroupMessageEvent, MessageEvent
+from nonebot.adapters.onebot.v11.event import GroupMessageEvent, MessageEvent
 from nonebot.matcher import Matcher
 from nonebot.typing import T_State
 
