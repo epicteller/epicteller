@@ -51,6 +51,14 @@ async def create_room(owner_id: int, name: str, description: str = '', avatar: s
     return room
 
 
+async def lock_room(room_id: int):
+    await RoomDAO.update_room(room_id, is_locked=1)
+
+
+async def unlock_room(room_id: int):
+    await RoomDAO.update_room(room_id, is_locked=0)
+
+
 async def get_member_ids_by_room(room_id: int, start: int = 0, limit: int = 50) -> Iterable[int]:
     member_ids = await RoomMemberDAO.get_member_ids_by_room(room_id, start, limit)
     return member_ids
@@ -75,5 +83,13 @@ async def get_room_count_by_member(member_id: int) -> int:
     return count_map.get(member_id)
 
 
+async def is_room_member(room_id: int, member_id: int) -> bool:
+    return await RoomMemberDAO.is_room_member(room_id, member_id)
+
+
 async def add_room_member(room_id: int, member_id: int):
     await RoomMemberDAO.add_room_member(room_id, member_id)
+
+
+async def remove_room_member(room_id: int, member_id: int):
+    await RoomMemberDAO.remove_room_member(room_id, member_id)

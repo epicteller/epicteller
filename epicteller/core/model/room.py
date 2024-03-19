@@ -14,6 +14,7 @@ class Room(BaseModel):
     description: str
     owner_id: int
     is_removed: bool
+    is_locked: bool
     current_campaign_id: Optional[int]
     avatar: str
     created: int

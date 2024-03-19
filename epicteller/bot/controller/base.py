@@ -42,6 +42,10 @@ async def prepare_context(matcher: Type[Matcher], bot: Bot, event: MessageEvent,
     if member and member.id == campaign.owner_id:
         state['is_gm'] = True
         return True
+    is_room_member = member and await room_ctl.is_room_member(room.id, member.id)
+
+    if room.is_locked and not is_room_member:
+        return False
 
     if not character:
         async with table.db.begin():
@@ -59,4 +63,6 @@ async def prepare_context(matcher: Type[Matcher], bot: Bot, event: MessageEvent,
             await matcher.finish(f'冒充其他用户的角色')
 
     state['is_gm'] = False
+    if not room.is_locked and member and not is_room_member:
+        await room_ctl.add_room_member(room.id, member.id)
     return True
