@@ -23,6 +23,7 @@ def _format_room(result) -> Optional[Room]:
         description=result.description,
         owner_id=result.owner_id,
         is_removed=bool(result.is_removed),
+        is_locked=bool(result.is_locked),
         current_campaign_id=result.current_campaign_id or None,
         avatar=result.avatar,
         created=int(result.created),
@@ -40,6 +41,7 @@ class RoomDAO:
         t.c.description,
         t.c.owner_id,
         t.c.is_removed,
+        t.c.is_locked,
         t.c.current_campaign_id,
         t.c.avatar,
         t.c.created,
@@ -144,7 +146,7 @@ class RoomMemberDAO:
         return count_map
 
     @classmethod
-    async def is_member_in_room(cls, room_id: int, member_id: int) -> bool:
+    async def is_room_member(cls, room_id: int, member_id: int) -> bool:
         query = select([cls.t.c.id]).where(and_(cls.t.c.room_id == room_id, cls.t.c.member_id == member_id))
         result = await table.execute(query)
         row = await result.fetchone()
@@ -152,7 +154,7 @@ class RoomMemberDAO:
 
     @classmethod
     async def add_room_member(cls, room_id: int, member_id: int) -> None:
-        if await cls.is_member_in_room(room_id, member_id):
+        if await cls.is_room_member(room_id, member_id):
             return
         created = int(time.time())
         query = cls.t.insert().values(room_id=room_id, member_id=member_id, created=created)
